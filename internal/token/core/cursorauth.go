@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"os"
-	"path/filepath"
 	"strings"
 )
 
@@ -61,15 +60,7 @@ func parseCursorSessionOverride(v string) (cursorSession, bool) {
 }
 
 func readCursorAccessToken() (cursorSession, bool) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return cursorSession{}, false
-	}
-	paths := []string{
-		filepath.Join(home, "Library", "Application Support", "Cursor", "User", "globalStorage", "state.vscdb"),
-		filepath.Join(home, ".config", "Cursor", "User", "globalStorage", "state.vscdb"),
-	}
-	for _, p := range paths {
+	for _, p := range cursorIDEPaths() {
 		if _, err := os.Stat(p); err != nil {
 			continue
 		}

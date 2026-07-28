@@ -54,6 +54,21 @@ func TestNewSummaryJSON(t *testing.T) {
 			t.Errorf("json missing key %q", key)
 		}
 	}
+	if all.CursorStatus != nil {
+		t.Error("cursor_status should be omitted for non-cursor harnesses")
+	}
+
+	cur := NewSummaryJSON(Summarize(newAggregate(Cursor), RangeAll, now), now)
+	if cur.CursorStatus == nil {
+		t.Fatal("cursor_status missing for cursor harness")
+	}
+	cb, err := json.Marshal(cur)
+	if err != nil {
+		t.Fatalf("marshal cursor: %v", err)
+	}
+	if !strings.Contains(string(cb), "cursor_status") {
+		t.Error("json missing cursor_status")
+	}
 }
 
 func TestCostCacheSaving(t *testing.T) {

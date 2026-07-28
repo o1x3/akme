@@ -404,6 +404,48 @@ func TestMonthRowNoDroppedMonth(t *testing.T) {
 	}
 }
 
+// Month labels sit on the week that contains day 1, not the next Sunday after
+// a mid-week month start (regression: Apr 1 Wednesday labeled the following week).
+func TestMonthRowAlignsToMonthStart(t *testing.T) {
+	// Sunday 2026-02-01: Apr 1 is Wednesday → week of Sun Mar 29 (col 8).
+	first := time.Date(2026, 2, 1, 0, 0, 0, 0, time.Local)
+	h := core.Heatmap{Weeks: 22, FirstDay: first}
+	for r := range 7 {
+		h.Cells[r] = make([]int64, 22)
+	}
+	row := ansi.ReplaceAllString(renderMonthRow(h, 22), "")
+	gridW := gutterW + 3*22 - 1
+	if w := lipgloss.Width(row); w != gridW {
+		t.Fatalf("month row width %d, want heatmap gridW %d", w, gridW)
+	}
+	// Apr 1 2026 = Wednesday → week starting Sun Mar 29 = 8 weeks after Feb 1.
+	wantCol := 8
+	wantX := gutterW + wantCol*3
+	if wantX+3 > len(row) {
+		t.Fatalf("row too short for Apr column: %q", row)
+	}
+	got := strings.TrimSpace(row[wantX : wantX+3])
+	if got != "Apr" {
+		t.Errorf("label at col %d (x=%d) = %q, want Apr; row=%q", wantCol, wantX, got, row)
+	}
+	// Must not appear one week late (old Sunday-month-change bug).
+	lateX := gutterW + (wantCol+1)*3
+	if lateX+3 <= len(row) {
+		if late := strings.TrimSpace(row[lateX : lateX+3]); late == "Apr" {
+			t.Errorf("Apr also at col %d (Sunday-late); row=%q", wantCol+1, row)
+		}
+	}
+}
+
+// Tab strip is padded to contentW so TUI Place cannot shift it vs the header.
+func TestTabStripWidth(t *testing.T) {
+	th := ThemeFor(core.Combined)
+	got := dispWidth(renderTabStrip(th, TabOverview))
+	if got != contentW {
+		t.Errorf("tab strip width %d, want contentW=%d", got, contentW)
+	}
+}
+
 // When colour will be stripped (piped output) the heatmap falls back to shade
 // glyphs; stripped lines must still stay within budget. Note the v2 semantic:
 // plain mode still emits SGR (the caller's writer strips it), so assertions

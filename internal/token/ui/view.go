@@ -217,7 +217,7 @@ func renderTabStrip(th Theme, tab string) string {
 			parts = append(parts, styled(muted()).Render(lbl))
 		}
 	}
-	return strings.Join(parts, styled(muted()).Render(" · "))
+	return padRight(strings.Join(parts, styled(muted()).Render(" · ")), contentW)
 }
 
 func renderRange(th Theme, rng string) string {
@@ -262,11 +262,14 @@ func renderBanner(th Theme, s core.Summary) string {
 
 	art := logoArtFor(s.Harness)
 	gap := strings.Repeat(" ", bannerGap)
+	// Vertically center the 6-row glyph against the taller info column so the
+	// art sits beside the stats rather than only the title/underline.
+	artOff := max((len(info)-len(art))/2, 0)
 	rows := make([]string, len(info))
 	for i := range info {
 		logo := strings.Repeat(" ", logoW)
-		if i < len(art) {
-			logo = styled(th.Accent).Render(art[i])
+		if ai := i - artOff; ai >= 0 && ai < len(art) {
+			logo = styled(th.Accent).Render(art[ai])
 		}
 		rows[i] = logo + gap + info[i]
 	}
@@ -331,35 +334,60 @@ func heatCell(th Theme, v, max int64, plain bool) string {
 	return styled(th.level(v, max)).Render("██") // foreground block, no background
 }
 
-// renderMonthRow places 3-letter month abbreviations above the column where each
-// month begins. If the first column collides with the previous label the month
-// is deferred to its next column rather than dropped (placed advances only after
-// a label is written).
+// renderMonthRow places 3-letter month abbreviations above the week column that
+// contains each month's first day (and the heatmap's starting month at col 0).
+// If a label would collide with the previous one it is deferred to the next
+// column rather than dropped (queued months stay until written). The row is
+// padded to the heatmap grid width so TUI centering cannot shift labels.
 func renderMonthRow(h core.Heatmap, cols int) string {
-	rowW := gutterW + cols*3
-	buf := make([]rune, rowW)
+	gridW := gutterW + 3*cols - 1
+	buf := make([]rune, gridW)
 	for i := range buf {
 		buf[i] = ' '
 	}
 	lastEnd := -10
 	placed := time.Month(0)
+	var queue []time.Month
+	enqueue := func(m time.Month) {
+		if m == 0 || m == placed {
+			return
+		}
+		for _, q := range queue {
+			if q == m {
+				return
+			}
+		}
+		queue = append(queue, m)
+	}
 	for col := range cols {
-		d := h.FirstDay.AddDate(0, 0, col*7)
-		if d.Month() == placed {
+		weekStart := h.FirstDay.AddDate(0, 0, col*7)
+		if col == 0 {
+			enqueue(weekStart.Month())
+		}
+		for i := range 7 {
+			d := weekStart.AddDate(0, 0, i)
+			if d.Day() == 1 {
+				enqueue(d.Month())
+			}
+		}
+		if len(queue) == 0 {
 			continue
 		}
 		x := gutterW + col*3
-		if x < lastEnd+1 || x+3 > rowW {
+		if x < lastEnd+1 || x+3 > gridW {
 			continue
 		}
-		ab := d.Format("Jan")
+		mon := queue[0]
+		queue = queue[1:]
+		ab := time.Date(2000, mon, 1, 0, 0, 0, 0, time.UTC).Format("Jan")
 		for i := range len(ab) {
 			buf[x+i] = rune(ab[i])
 		}
-		placed = d.Month()
+		placed = mon
 		lastEnd = x + 3
 	}
-	return styled(label()).Render(strings.TrimRight(string(buf), " "))
+	// Keep leading/internal spaces (label columns); full buf is exactly gridW.
+	return styled(label()).Render(string(buf[:gridW]))
 }
 
 func renderLegend(th Theme, plain bool) string {
