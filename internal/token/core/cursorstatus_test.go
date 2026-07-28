@@ -81,6 +81,11 @@ func TestCursorHintFor(t *testing.T) {
 	if h := CursorHintFor(est); h == "" {
 		t.Error("estimated cursor summary should produce a hint")
 	}
+	// Activity with 0 tokens is the cross-machine failure mode from the screenshot.
+	zeroTok := Summary{Harness: Cursor, Sessions: 185, Messages: 3149, TotalTokens: 0}
+	if h := CursorHintFor(zeroTok); h == "" {
+		t.Error("activity with 0 tokens should produce a hint")
+	}
 	other := Summary{Harness: Claude, TokensEstimated: true}
 	if h := CursorHintFor(other); h != "" {
 		t.Errorf("non-cursor hint = %q", h)

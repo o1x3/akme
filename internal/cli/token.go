@@ -245,8 +245,8 @@ func runTokenJSON(o tokenOptions, now time.Time, stdout io.Writer) error {
 	return nil
 }
 
-// maybeCursorHint prints a one-line stderr diagnostic when Cursor is empty or
-// still estimated so machine/account gaps are self-explanatory.
+// maybeCursorHint prints a one-line stderr diagnostic when Cursor is empty,
+// still estimated, or shows activity with 0 billed tokens.
 func maybeCursorHint(harness string, s core.Summary) {
 	if harness != core.Cursor {
 		return
@@ -292,7 +292,8 @@ HARNESS   (default: all)
   Claude uses final streaming chunks; Cursor prefers the dashboard usage
   API when logged in (real input/output/cache), else local bubble/meter/chars÷4.
   Cursor Auto resolves underlying models locally when available.
-  Cursor activity is machine-local; billed tokens follow the logged-in account.
+  Cursor activity is machine-local; billed tokens follow the logged-in account
+  (incl. team memberships). Empty dashboard replies keep local estimates.
   Paths: macOS ~/Library/Application Support, Linux ~/.config, Windows %APPDATA%.
 
 RANGE     (default: alltime)

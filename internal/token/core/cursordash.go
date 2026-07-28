@@ -51,7 +51,8 @@ func cursorDashDisabled() bool {
 
 // applyCursorDashboard replaces a's token ledgers with Cursor dashboard
 // billed counts when a session is available. Sessions/messages stay local.
-// Soft-fails (no auth, network, API error) leave a unchanged.
+// Soft-fails (no auth, network, API error, or empty dashboard when local
+// estimates already exist) leave a unchanged.
 func applyCursorDashboard(a *Aggregate) {
 	setCursorDashApplied(false)
 	if a == nil || cursorDashDisabled() {
@@ -65,8 +66,25 @@ func applyCursorDashboard(a *Aggregate) {
 	if err != nil || usage == nil {
 		return
 	}
+	// Empty HTTP-200 event lists used to wipe local estimates to 0 tokens
+	// while keeping sessions/messages — the confusing "works on my machine"
+	// dashboard. Keep local ledgers when the account report is empty.
+	if cursorDashUsageEmpty(usage) {
+		if a.TotalTokens() > 0 {
+			return
+		}
+		setCursorDashApplied(true) // reached the API; account truly has no events
+		return
+	}
 	applyCursorDashUsage(a, usage)
 	setCursorDashApplied(true)
+}
+
+func cursorDashUsageEmpty(u *cursorDashUsage) bool {
+	if u == nil {
+		return true
+	}
+	return u.InputTokens+u.OutputTokens+u.CacheReadTokens+u.CacheWriteTokens == 0
 }
 
 func applyCursorDashUsage(a *Aggregate, u *cursorDashUsage) {
@@ -100,12 +118,14 @@ func fetchCursorDashboard(sess cursorSession) (*cursorDashUsage, error) {
 	if err != nil {
 		return nil, err
 	}
-	events, err := client.allEvents(me.ID, 0, time.Now().UnixMilli()+int64(24*time.Hour/time.Millisecond))
+	endMS := time.Now().UnixMilli() + int64(24*time.Hour/time.Millisecond)
+	usage, err := client.bestUsage(me.ID, 0, endMS)
 	if err != nil {
 		return nil, err
 	}
-	usage := rollupCursorEvents(events)
-	_ = writeCursorDashCache(sess.Sub, usage)
+	if !cursorDashUsageEmpty(usage) {
+		_ = writeCursorDashCache(sess.Sub, usage)
+	}
 	return usage, nil
 }
 
@@ -147,13 +167,74 @@ type cursorEventsPage struct {
 	UsageEventsDisplay    []cursorUsageEvent `json:"usageEventsDisplay"`
 }
 
-func (c *cursorDashClient) allEvents(userID, startMS, endMS int64) ([]cursorUsageEvent, error) {
+// bestUsage tries personal teamId=0 plus any memberships from /teams and
+// keeps the rollup with the most billed tokens (team plans often return empty
+// for teamId=0 even when the account has heavy usage).
+func (c *cursorDashClient) bestUsage(userID, startMS, endMS int64) (*cursorDashUsage, error) {
+	ids := []int64{0}
+	if teams, err := c.teams(); err == nil {
+		for _, id := range teams {
+			if id != 0 {
+				ids = append(ids, id)
+			}
+		}
+	}
+	var best *cursorDashUsage
+	var lastErr error
+	for _, teamID := range ids {
+		events, err := c.allEvents(userID, teamID, startMS, endMS)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		u := rollupCursorEvents(events)
+		if best == nil || cursorDashTotal(u) > cursorDashTotal(best) {
+			best = u
+		}
+	}
+	if best != nil {
+		return best, nil
+	}
+	if lastErr != nil {
+		return nil, lastErr
+	}
+	return &cursorDashUsage{ByDayTokens: map[string]int64{}, ByDayModelTok: map[string]map[string]int64{}}, nil
+}
+
+func cursorDashTotal(u *cursorDashUsage) int64 {
+	if u == nil {
+		return 0
+	}
+	return u.InputTokens + u.OutputTokens + u.CacheReadTokens + u.CacheWriteTokens
+}
+
+type cursorTeamsResp struct {
+	Teams []struct {
+		ID int64 `json:"id"`
+	} `json:"teams"`
+}
+
+func (c *cursorDashClient) teams() ([]int64, error) {
+	var resp cursorTeamsResp
+	if err := c.post("/api/dashboard/teams", map[string]any{}, &resp); err != nil {
+		return nil, err
+	}
+	out := make([]int64, 0, len(resp.Teams))
+	for _, t := range resp.Teams {
+		if t.ID != 0 {
+			out = append(out, t.ID)
+		}
+	}
+	return out, nil
+}
+
+func (c *cursorDashClient) allEvents(userID, teamID, startMS, endMS int64) ([]cursorUsageEvent, error) {
 	var all []cursorUsageEvent
 	total := -1
 	for page := 1; page <= cursorDashMaxPages; page++ {
 		var resp cursorEventsPage
 		body := map[string]any{
-			"teamId":    0,
+			"teamId":    teamID,
 			"startDate": strconv.FormatInt(startMS, 10),
 			"endDate":   strconv.FormatInt(endMS, 10),
 			"userId":    userID,
