@@ -241,6 +241,12 @@ composer context meter once per chat, else ~4 bytes/token. Cursor Auto
 resolves to the underlying local model (AgentKv / usageData) when available.
 Set NX_TOKEN_CURSOR_LOCAL=1 to force local-only Cursor totals.
 
+Cursor sessions/heatmap are machine-local (state.vscdb does not sync across
+machines or accounts). Billed token totals follow the logged-in Cursor
+account via the dashboard API. <config> is ~/Library/Application Support on
+macOS, ~/.config on Linux, and %APPDATA% on Windows. nx token cursor json
+includes cursor_status; empty/estimated Cursor output prints a stderr hint.
+
 More: nx help token
 
 `
@@ -315,6 +321,10 @@ ENV
   CLAUDE_CONFIG_DIR       comma-separated Claude config roots (…/projects)
   CODEX_HOME              comma-separated Codex homes
   PI_AGENT_DIR            comma-separated pi-agent session dirs
+
+Cursor activity (sessions/heatmap) is machine-local; billed tokens follow the
+logged-in account. Check cursor_status in nx token cursor json or the stderr
+hint when Cursor is empty/estimated.
 
 Piped output is plain text. NO_COLOR / CLICOLOR are respected.
 

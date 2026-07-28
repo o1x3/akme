@@ -87,7 +87,9 @@ Data sources:
 | pi.dev | `~/.pi/agent/sessions/**/*.jsonl` | real |
 | Cursor (IDE + CLI) | `<config>/Cursor/User/globalStorage/state.vscdb` + `~/.cursor/chats/*/*/store.db` | dashboard usage API when logged in (input/output/cache); else bubble/meter/chars÷4 |
 
-Overrides: `CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `PI_AGENT_DIR` (comma-separated). Cursor prefers billed totals from the Cursor dashboard (session JWT in `state.vscdb`); local-only mode undercounts because cache and cumulatives are server-side. Set `NX_TOKEN_CURSOR_LOCAL=1` to skip the dashboard. Cursor Auto resolves to the underlying local model when AgentKv / `usageData` records it; otherwise it stays "Auto". `<config>` is `~/Library/Application Support` on macOS and `~/.config` on Linux.
+Overrides: `CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `PI_AGENT_DIR` (comma-separated). Cursor prefers billed totals from the Cursor dashboard (session JWT in `state.vscdb`); local-only mode undercounts because cache and cumulatives are server-side. Set `NX_TOKEN_CURSOR_LOCAL=1` to skip the dashboard. Cursor Auto resolves to the underlying local model when AgentKv / `usageData` records it; otherwise it stays "Auto".
+
+Cursor **sessions/heatmap are machine-local** (`state.vscdb` does not sync across machines or accounts). **Billed token totals follow the logged-in Cursor account** via the dashboard API. `<config>` is `~/Library/Application Support` on macOS, `~/.config` on Linux, and `%APPDATA%` on Windows. `nx token cursor json` includes a `cursor_status` object (`ide_found`, `cli_stores`, `auth_ok`, `dashboard_ok`, `hint`); empty or estimated Cursor output also prints a one-line stderr hint. Diagnose with `NX_TOKEN_NO_CACHE=1`, `NX_TOKEN_CURSOR_LOCAL=1`, or `NX_CURSOR_SESSION_TOKEN`.
 
 Environment:
 

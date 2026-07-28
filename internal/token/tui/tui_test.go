@@ -9,6 +9,7 @@ import (
 	"github.com/o1x3/nx/internal/token/ui"
 
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/colorprofile"
 )
 
@@ -46,6 +47,41 @@ func TestTUIViewRenders(t *testing.T) {
 	}
 	if !v.AltScreen {
 		t.Error("TUI view should request the alternate screen")
+	}
+}
+
+// padBlock makes every line the same display width so Place centers the card
+// as one block (ragged month/title rows must not get extra left padding).
+func TestPadBlockUniformWidth(t *testing.T) {
+	in := "short\n" + strings.Repeat("x", 20) + "\nmid"
+	out := padBlock(in)
+	lines := strings.Split(out, "\n")
+	if len(lines) != 3 {
+		t.Fatalf("lines = %d, want 3", len(lines))
+	}
+	w0 := lipgloss.Width(lines[0])
+	for i, l := range lines {
+		if w := lipgloss.Width(l); w != w0 {
+			t.Errorf("line %d width %d, want %d", i, w, w0)
+		}
+	}
+	if w0 != 20 {
+		t.Errorf("padded width %d, want 20", w0)
+	}
+}
+
+func TestTUIViewUniformCardLines(t *testing.T) {
+	m := fixedModel()
+	m.w, m.h = 0, 0 // skip Place so we inspect the padded body widths
+	// Re-render the card path without Place by calling padBlock on a card.
+	s := core.Summarize(m.aggs[harnesses[0]], ranges[0], m.now)
+	card := padBlock(ui.RenderCard(s, ui.TabOverview))
+	lines := strings.Split(card, "\n")
+	w0 := lipgloss.Width(lines[0])
+	for i, l := range lines {
+		if w := lipgloss.Width(l); w != w0 {
+			t.Errorf("card line %d width %d, want %d", i, w, w0)
+		}
 	}
 }
 

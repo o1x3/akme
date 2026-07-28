@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.4
+
+- Fixed `nx token -i` TUI alignment: pad the card to a uniform width before centering so month labels, the tab strip, and the logo no longer drift relative to full-width rows.
+- Fixed contribution-graph month labels to sit on the week that contains day 1 (with collision deferral), and pad the month row to the heatmap width.
+- Vertically centered the banner logo beside the stats column; padded the tab strip to the card width.
+- Cursor now probes the Windows `%APPDATA%\Cursor\User\globalStorage\state.vscdb` path (in addition to macOS/Linux).
+- `nx token cursor json` includes `cursor_status` (IDE path, CLI stores, auth, dashboard); empty or estimated Cursor output prints a stderr hint. Documented that sessions are machine-local while billed tokens follow the logged-in account.
+
 ## 0.4.3
 
 - Fixed `nx token` banner stats alignment: the key·value info column now spans to the card's right edge (same as cost amounts and the footer), so values right-align cleanly and long fav-model names keep a proper dotted leader.

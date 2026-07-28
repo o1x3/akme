@@ -53,6 +53,7 @@ func cursorDashDisabled() bool {
 // billed counts when a session is available. Sessions/messages stay local.
 // Soft-fails (no auth, network, API error) leave a unchanged.
 func applyCursorDashboard(a *Aggregate) {
+	setCursorDashApplied(false)
 	if a == nil || cursorDashDisabled() {
 		return
 	}
@@ -65,6 +66,7 @@ func applyCursorDashboard(a *Aggregate) {
 		return
 	}
 	applyCursorDashUsage(a, usage)
+	setCursorDashApplied(true)
 }
 
 func applyCursorDashUsage(a *Aggregate, u *cursorDashUsage) {

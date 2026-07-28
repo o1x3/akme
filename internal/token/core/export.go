@@ -42,6 +42,10 @@ type SummaryJSON struct {
 	EstUSD          float64 `json:"est_usd"`
 	EstUSDAllPriced bool    `json:"est_usd_all_priced"` // false ⇒ some model had no price
 	HobbitFactor    float64 `json:"hobbit_factor"`
+
+	// CursorStatus is set only for the cursor harness: why local sources /
+	// dashboard enrichment may be missing on this machine/account.
+	CursorStatus *CursorStatus `json:"cursor_status,omitempty"`
 }
 
 // ModelJSON is one model's line in the JSON output.
@@ -79,6 +83,10 @@ func NewSummaryJSON(s Summary, now time.Time) SummaryJSON {
 	j.Streak.Longest = s.LongestStreak
 	for _, m := range s.Models {
 		j.Models = append(j.Models, ModelJSON{Name: m.Name, ID: m.ID, Tokens: m.Tokens, Messages: m.Messages})
+	}
+	if s.Harness == Cursor {
+		st := ProbeCursorStatus()
+		j.CursorStatus = &st
 	}
 	return j
 }

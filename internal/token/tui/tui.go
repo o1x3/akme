@@ -4,6 +4,7 @@
 package tui
 
 import (
+	"strings"
 	"time"
 
 	"github.com/o1x3/nx/internal/token/core"
@@ -115,7 +116,10 @@ func (m model) View() tea.View {
 	card := ui.RenderCard(s, tabs[m.tab])
 
 	hint := m.hintCol.Render("←/→ harness · tab/⇧tab views · 1/2/3 range · q quit")
-	body := lipgloss.JoinVertical(lipgloss.Center, card, "", hint)
+	// Left-join then pad every line to a shared width so Place centers the
+	// card as one block. Place pads each line independently; a ragged card
+	// would shift month labels, logo rows, and the tab strip sideways.
+	body := padBlock(lipgloss.JoinVertical(lipgloss.Left, card, "", hint))
 
 	if m.w > 0 && m.h > 0 {
 		body = lipgloss.Place(m.w, m.h, lipgloss.Center, lipgloss.Center, body)
@@ -123,6 +127,24 @@ func (m model) View() tea.View {
 	v := tea.NewView(body)
 	v.AltScreen = true
 	return v
+}
+
+// padBlock right-pads every line to the widest line's display width so
+// lipgloss.Place centers the whole block instead of each ragged line.
+func padBlock(s string) string {
+	lines := strings.Split(s, "\n")
+	maxW := 0
+	for _, l := range lines {
+		if w := lipgloss.Width(l); w > maxW {
+			maxW = w
+		}
+	}
+	for i, l := range lines {
+		if d := maxW - lipgloss.Width(l); d > 0 {
+			lines[i] = l + strings.Repeat(" ", d)
+		}
+	}
+	return strings.Join(lines, "\n")
 }
 
 // Run starts the interactive program.

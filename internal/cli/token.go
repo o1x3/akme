@@ -174,6 +174,7 @@ func (a App) runToken(ctx context.Context, args []string, stdout io.Writer) erro
 	agg := core.Load(o.harness)
 	s := core.Summarize(agg, o.rng, now)
 	fmt.Fprintln(out, ui.RenderCard(s, o.tab))
+	maybeCursorHint(o.harness, s)
 
 	// Nudge toward the interactive view when on a real terminal. Update checks
 	// are nx-wide (selfupdate), not per-command, so no notice is printed here.
@@ -202,6 +203,7 @@ func runTokenQuiet(o tokenOptions, now time.Time, stdout io.Writer) error {
 	s := core.Summarize(core.Load(o.harness), o.rng, now)
 	if !s.HasData() {
 		fmt.Fprintln(stdout, "nx token: no usage for this selection")
+		maybeCursorHint(o.harness, s)
 		return ExitError{Code: 3}
 	}
 	fmt.Fprintf(stdout, "nx token%s %s tok · %s msgs · %dd streak · %s\n",
@@ -217,12 +219,17 @@ func runTokenJSON(o tokenOptions, now time.Time, stdout io.Writer) error {
 	enc := json.NewEncoder(stdout)
 	if o.harness == core.Combined {
 		any := false
+		var cursorSum core.Summary
 		for _, h := range core.Harnesses {
 			s := core.Summarize(core.Load(h), o.rng, now)
 			_ = enc.Encode(core.NewSummaryJSON(s, now))
 			any = any || s.HasData()
+			if h == core.Cursor {
+				cursorSum = s
+			}
 		}
 		if !any {
+			maybeCursorHint(core.Cursor, cursorSum)
 			return ExitError{Code: 3}
 		}
 		return nil
@@ -231,9 +238,22 @@ func runTokenJSON(o tokenOptions, now time.Time, stdout io.Writer) error {
 	enc.SetIndent("", "  ")
 	_ = enc.Encode(core.NewSummaryJSON(s, now))
 	if !s.HasData() {
+		maybeCursorHint(o.harness, s)
 		return ExitError{Code: 3}
 	}
+	maybeCursorHint(o.harness, s)
 	return nil
+}
+
+// maybeCursorHint prints a one-line stderr diagnostic when Cursor is empty or
+// still estimated so machine/account gaps are self-explanatory.
+func maybeCursorHint(harness string, s core.Summary) {
+	if harness != core.Cursor {
+		return
+	}
+	if hint := core.CursorHintFor(s); hint != "" {
+		fmt.Fprintln(os.Stderr, "nx token:", hint)
+	}
 }
 
 // runTokenCompare renders the side-by-side harness card. stdout is the card
@@ -272,6 +292,8 @@ HARNESS   (default: all)
   Claude uses final streaming chunks; Cursor prefers the dashboard usage
   API when logged in (real input/output/cache), else local bubble/meter/chars÷4.
   Cursor Auto resolves underlying models locally when available.
+  Cursor activity is machine-local; billed tokens follow the logged-in account.
+  Paths: macOS ~/Library/Application Support, Linux ~/.config, Windows %APPDATA%.
 
 RANGE     (default: alltime)
   alltime           lifetime
@@ -302,6 +324,8 @@ ENV
   NX_BACKGROUND     light|dark — override terminal background detection
   NX_TRUECOLOR      set to force 24-bit colour
   NX_TOKEN_NO_CACHE set to bypass the on-disk aggregate cache
+  NX_TOKEN_CURSOR_LOCAL set to skip Cursor dashboard (local estimates only)
+  NX_CURSOR_SESSION_TOKEN / CURSOR_SESSION_TOKEN — Cursor dashboard JWT
   CLAUDE_CONFIG_DIR / CODEX_HOME / PI_AGENT_DIR — harness data roots
 
 EXIT

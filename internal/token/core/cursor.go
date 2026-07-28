@@ -52,15 +52,27 @@ func loadCursor() *Aggregate {
 }
 
 func cursorPaths() []string {
+	paths := cursorIDEPaths()
+	paths = append(paths, cursorCLIPaths()...)
+	return paths
+}
+
+// cursorIDEPaths returns candidate state.vscdb locations for macOS, Linux, and
+// Windows. All are probed; missing paths are skipped by loaders.
+func cursorIDEPaths() []string {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return cursorCLIPaths()
+		return nil
 	}
 	paths := []string{
 		filepath.Join(home, "Library", "Application Support", "Cursor", "User", "globalStorage", "state.vscdb"),
 		filepath.Join(home, ".config", "Cursor", "User", "globalStorage", "state.vscdb"),
 	}
-	paths = append(paths, cursorCLIPaths()...)
+	if appdata := os.Getenv("APPDATA"); appdata != "" {
+		paths = append(paths, filepath.Join(appdata, "Cursor", "User", "globalStorage", "state.vscdb"))
+	} else {
+		paths = append(paths, filepath.Join(home, "AppData", "Roaming", "Cursor", "User", "globalStorage", "state.vscdb"))
+	}
 	return paths
 }
 
