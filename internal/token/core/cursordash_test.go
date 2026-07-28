@@ -20,6 +20,7 @@ func testJWT(sub string) string {
 
 func TestParseCursorSessionOverride(t *testing.T) {
 	jwt := testJWT("user_01ABC")
+	prefixed := testJWT("github|user_01ABC")
 	cases := []struct {
 		in      string
 		wantSub string
@@ -28,6 +29,8 @@ func TestParseCursorSessionOverride(t *testing.T) {
 		{jwt, "user_01ABC", true},
 		{"user_01ABC::" + jwt, "user_01ABC", true},
 		{"user_01ABC%3A%3A" + jwt, "user_01ABC", true},
+		{prefixed, "user_01ABC", true}, // strip WorkOS connection prefix
+		{"github|user_01ABC::" + jwt, "user_01ABC", true},
 		{"", "", false},
 		{"not-a-jwt", "", false},
 	}
@@ -40,6 +43,15 @@ func TestParseCursorSessionOverride(t *testing.T) {
 		if ok && s.Sub != tc.wantSub {
 			t.Errorf("parse(%q).Sub = %q, want %q", tc.in, s.Sub, tc.wantSub)
 		}
+	}
+}
+
+func TestCookieSubStripsConnectionPrefix(t *testing.T) {
+	if got := cookieSub("github|user_01ABC"); got != "user_01ABC" {
+		t.Errorf("cookieSub = %q, want user_01ABC", got)
+	}
+	if got := cookieSub("user_01ABC"); got != "user_01ABC" {
+		t.Errorf("cookieSub bare = %q", got)
 	}
 }
 
@@ -90,6 +102,8 @@ func TestApplyCursorDashboard(t *testing.T) {
 		switch r.URL.Path {
 		case "/api/auth/me":
 			_ = json.NewEncoder(w).Encode(map[string]any{"id": 42, "email": "u@example.com", "sub": "user_01DASH"})
+		case "/api/dashboard/teams":
+			_ = json.NewEncoder(w).Encode(map[string]any{"teams": []any{}})
 		case "/api/dashboard/get-filtered-usage-events":
 			if r.Header.Get("Origin") != "https://cursor.com" {
 				t.Error("POST missing Origin CSRF header")
@@ -197,6 +211,131 @@ func TestCursorDashLocalOptOut(t *testing.T) {
 	}
 	if a.InputTokens != 7 || !a.TokensEstimated {
 		t.Errorf("aggregate mutated: in=%d est=%v", a.InputTokens, a.TokensEstimated)
+	}
+}
+
+// TestApplyCursorDashboardEmptyKeepsLocal: an authenticated but empty event
+// list must not wipe local estimates (the "0 tokens / thousands of messages"
+// cross-machine failure mode).
+func TestApplyCursorDashboardEmptyKeepsLocal(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("NX_TOKEN_CURSOR_LOCAL", "0")
+	t.Setenv("NX_TOKEN_NO_CACHE", "1")
+	t.Setenv("NX_CACHE_DIR", filepath.Join(home, "cache"))
+	t.Setenv("NX_CURSOR_SESSION_TOKEN", testJWT("user_01EMPTY"))
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/auth/me":
+			_ = json.NewEncoder(w).Encode(map[string]any{"id": 7, "email": "u@example.com", "sub": "user_01EMPTY"})
+		case "/api/dashboard/teams":
+			_ = json.NewEncoder(w).Encode(map[string]any{"teams": []any{}})
+		case "/api/dashboard/get-filtered-usage-events":
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"totalUsageEventsCount": 0,
+				"usageEventsDisplay":    []any{},
+			})
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	t.Cleanup(srv.Close)
+	prevURL, prevHTTP := cursorDashBaseURL, cursorDashHTTP
+	cursorDashBaseURL = srv.URL
+	cursorDashHTTP = srv.Client()
+	t.Cleanup(func() {
+		cursorDashBaseURL = prevURL
+		cursorDashHTTP = prevHTTP
+	})
+
+	a := newAggregate(Cursor)
+	a.InputTokens = 50
+	a.OutputTokens = 25
+	a.ByDayTokens["2026-06-20"] = 75
+	a.TokensEstimated = true
+	a.Sessions, a.Messages = 3, 40
+	applyCursorDashboard(a)
+	if a.InputTokens != 50 || a.OutputTokens != 25 || a.ByDayTokens["2026-06-20"] != 75 {
+		t.Errorf("local ledger wiped: in=%d out=%d day=%d", a.InputTokens, a.OutputTokens, a.ByDayTokens["2026-06-20"])
+	}
+	if !a.TokensEstimated {
+		t.Error("TokensEstimated cleared despite empty dashboard")
+	}
+	if getCursorDashApplied() {
+		t.Error("DashboardOK should be false when empty response was rejected to keep local")
+	}
+}
+
+// TestApplyCursorDashboardTeamFallback: team plans often return empty for
+// teamId=0; pick the membership with real billed events.
+func TestApplyCursorDashboardTeamFallback(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("NX_TOKEN_CURSOR_LOCAL", "0")
+	t.Setenv("NX_TOKEN_NO_CACHE", "1")
+	t.Setenv("NX_CACHE_DIR", filepath.Join(home, "cache"))
+	t.Setenv("NX_CURSOR_SESSION_TOKEN", testJWT("user_01TEAM"))
+
+	day := time.Date(2026, 7, 1, 12, 0, 0, 0, time.Local)
+	ts := fmt.Sprintf("%d", day.UnixMilli())
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/auth/me":
+			_ = json.NewEncoder(w).Encode(map[string]any{"id": 9, "email": "t@example.com", "sub": "user_01TEAM"})
+		case "/api/dashboard/teams":
+			_ = json.NewEncoder(w).Encode(map[string]any{"teams": []map[string]any{{"id": 2168997}}})
+		case "/api/dashboard/get-filtered-usage-events":
+			var body struct {
+				TeamID int64 `json:"teamId"`
+			}
+			_ = json.NewDecoder(r.Body).Decode(&body)
+			if body.TeamID == 0 {
+				_ = json.NewEncoder(w).Encode(map[string]any{
+					"totalUsageEventsCount": 0,
+					"usageEventsDisplay":    []any{},
+				})
+				return
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"totalUsageEventsCount": 1,
+				"usageEventsDisplay": []map[string]any{
+					{
+						"timestamp": ts,
+						"model":     "gpt-5.6-sol",
+						"tokenUsage": map[string]any{
+							"inputTokens":      100,
+							"outputTokens":     50,
+							"cacheReadTokens":  0,
+							"cacheWriteTokens": 0,
+						},
+					},
+				},
+			})
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	t.Cleanup(srv.Close)
+	prevURL, prevHTTP := cursorDashBaseURL, cursorDashHTTP
+	cursorDashBaseURL = srv.URL
+	cursorDashHTTP = srv.Client()
+	t.Cleanup(func() {
+		cursorDashBaseURL = prevURL
+		cursorDashHTTP = prevHTTP
+	})
+
+	a := newAggregate(Cursor)
+	a.Sessions, a.Messages = 1, 1
+	applyCursorDashboard(a)
+	if a.InputTokens != 100 || a.OutputTokens != 50 {
+		t.Errorf("in/out = %d/%d, want 100/50 from team events", a.InputTokens, a.OutputTokens)
+	}
+	if a.TokensEstimated {
+		t.Error("TokensEstimated = true, want false after team enrich")
+	}
+	if !getCursorDashApplied() {
+		t.Error("DashboardOK = false, want true")
 	}
 }
 

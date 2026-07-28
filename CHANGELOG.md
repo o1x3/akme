@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.5
+
+- Fixed Cursor dashboard auth cookie id: strip WorkOS connection prefixes (`github|user_…` → `user_…`) so session JWTs authenticate on every machine.
+- Discover Cursor team memberships (`/api/dashboard/teams`) and prefer the teamId that returns billed events (team plans often look empty at `teamId=0`).
+- Empty dashboard event lists no longer wipe local token estimates to 0 while keeping sessions/messages — the cross-machine "No tokens recorded yet" failure mode.
+- Stronger stderr / `cursor_status` hints when Cursor shows activity with 0 billed tokens.
+
 ## 0.4.4
 
 - Fixed `nx token -i` TUI alignment: pad the card to a uniform width before centering so month labels, the tab strip, and the logo no longer drift relative to full-width rows.

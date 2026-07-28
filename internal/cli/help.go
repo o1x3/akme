@@ -243,9 +243,11 @@ Set NX_TOKEN_CURSOR_LOCAL=1 to force local-only Cursor totals.
 
 Cursor sessions/heatmap are machine-local (state.vscdb does not sync across
 machines or accounts). Billed token totals follow the logged-in Cursor
-account via the dashboard API. <config> is ~/Library/Application Support on
-macOS, ~/.config on Linux, and %APPDATA% on Windows. nx token cursor json
-includes cursor_status; empty/estimated Cursor output prints a stderr hint.
+account via the dashboard API (personal teamId=0 plus discovered team
+memberships). Empty dashboard responses no longer wipe local estimates.
+<config> is ~/Library/Application Support on macOS, ~/.config on Linux, and
+%APPDATA% on Windows. nx token cursor json includes cursor_status;
+empty/estimated/zero-token Cursor output prints a stderr hint.
 
 More: nx help token
 
@@ -323,8 +325,9 @@ ENV
   PI_AGENT_DIR            comma-separated pi-agent session dirs
 
 Cursor activity (sessions/heatmap) is machine-local; billed tokens follow the
-logged-in account. Check cursor_status in nx token cursor json or the stderr
-hint when Cursor is empty/estimated.
+logged-in account (including team memberships). Empty dashboard replies keep
+local estimates. Check cursor_status in nx token cursor json or the stderr
+hint when Cursor is empty/estimated/zero-token.
 
 Piped output is plain text. NO_COLOR / CLICOLOR are respected.
 

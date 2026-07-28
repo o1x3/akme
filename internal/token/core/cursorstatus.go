@@ -65,21 +65,30 @@ func (st CursorStatus) hint() string {
 	case !st.AuthOK:
 		return "not logged in to Cursor (or session expired); billed tokens need a dashboard session — sign in or set NX_CURSOR_SESSION_TOKEN"
 	case !st.DashboardOK:
-		return "Cursor dashboard unreachable; showing local estimates (sessions stay machine-local)"
+		return "Cursor dashboard returned no billed usage; keeping local estimates (sessions stay machine-local — confirm the same Cursor account, or try NX_TOKEN_CURSOR_LOCAL=1)"
 	default:
 		return ""
 	}
 }
 
-// CursorHintFor returns a one-line diagnostic when Cursor data is missing or
-// still estimated. Empty string means no hint.
+// CursorHintFor returns a one-line diagnostic when Cursor data is missing,
+// still estimated, or shows activity with 0 billed tokens. Empty string means
+// no hint.
 func CursorHintFor(s Summary) string {
 	if s.Harness != Cursor {
 		return ""
 	}
 	st := ProbeCursorStatus()
-	if s.HasData() && !s.TokensEstimated && st.DashboardOK {
+	// Healthy billed totals from the dashboard.
+	if s.TotalTokens > 0 && !s.TokensEstimated && st.DashboardOK {
 		return ""
+	}
+	// The confusing cross-machine case: sessions/messages present, tokens 0.
+	if (s.Messages > 0 || s.Sessions > 0) && s.TotalTokens == 0 {
+		if st.Hint != "" {
+			return st.Hint
+		}
+		return "Cursor activity found but 0 billed tokens — confirm the same logged-in account on this machine, or set NX_TOKEN_CURSOR_LOCAL=1 for local estimates"
 	}
 	if !s.HasData() || s.TokensEstimated {
 		return st.Hint
