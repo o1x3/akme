@@ -1,6 +1,6 @@
 {
   "name": "@o1x3/akme",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "Personal developer CLI: git branch stats, coding-agent token usage, self-update",
   "license": "MIT",
   "bin": {
@@ -9,12 +9,18 @@
   "files": [
     "bin/",
     "lib/",
-    "scripts/",
+    "scripts/postinstall.js",
     "README.md"
   ],
   "scripts": {
     "postinstall": "node scripts/postinstall.js",
     "test": "node --test lib/*.test.js"
+  },
+  "optionalDependencies": {
+    "@o1x3/akme-darwin-arm64": "0.6.0",
+    "@o1x3/akme-darwin-x64": "0.6.0",
+    "@o1x3/akme-linux-arm64": "0.6.0",
+    "@o1x3/akme-linux-x64": "0.6.0"
   },
   "engines": {
     "node": ">=18"

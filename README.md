@@ -27,6 +27,8 @@ npm install -g @o1x3/akme
 bunx @o1x3/akme help
 ```
 
+`npx` / `npm install` pull the matching native binary from an npm platform package (`optionalDependencies`), so first run does not wait on a GitHub release download.
+
 curl (installs to `~/.local/bin/akme`):
 
 ```sh
@@ -162,15 +164,15 @@ Pre-commit runs `scripts/format.sh`, then `scripts/check.sh`.
 
 ## Release
 
-Releases are driven by `VERSION`. GoReleaser publishes GitHub assets, then the same tag goes to npm as [`@o1x3/akme`](https://www.npmjs.com/package/@o1x3/akme).
+Releases are driven by `VERSION`. GoReleaser publishes GitHub assets, then the same tag goes to npm as [`@o1x3/akme`](https://www.npmjs.com/package/@o1x3/akme) plus platform packages (`@o1x3/akme-darwin-arm64`, `-darwin-x64`, `-linux-arm64`, `-linux-x64`) that embed the native binaries.
 
-Bump `VERSION`, sync `npm/package.json`, add a `CHANGELOG.md` section, push to `main`. Actions tags `v<VERSION>`, ships macOS/Linux `amd64`/`arm64` archives (`akme_<os>_<arch>.tar.gz`), and runs `npm publish` via Trusted Publishing (OIDC, no `NPM_TOKEN`). Trusted publisher: GitHub `o1x3` / `akme` / workflow `release.yml`.
+Bump `VERSION`, sync `npm/package.json` (and its `optionalDependencies`), add a `CHANGELOG.md` section, push to `main`. Actions tags `v<VERSION>`, ships macOS/Linux `amd64`/`arm64` archives (`akme_<os>_<arch>.tar.gz`), and runs `npm/scripts/publish-release.js` via Trusted Publishing (OIDC, no `NPM_TOKEN`). Trusted publisher on each package: GitHub `o1x3` / `akme` / workflow `release.yml`.
 
 ```sh
-printf '0.5.1\n' > VERSION
-# sync npm/package.json version
-# add ## 0.5.1 to CHANGELOG.md
-git commit -am "release: v0.5.1"
+printf '0.6.1\n' > VERSION
+# sync npm/package.json version + optionalDependencies
+# add ## 0.6.1 to CHANGELOG.md
+git commit -am "release: v0.6.1"
 git push origin main
 ```
 

@@ -1,8 +1,13 @@
 "use strict";
 
-// Best-effort: npx / offline / CI without network should not fail install.
-// The bin shim downloads on first run if vendor/ is empty.
-const { ensureBinary } = require("../lib/binary");
+// Best-effort fallback when optionalDependencies were skipped
+// (--omit=optional / --no-optional). Prefer the platform package from npm;
+// only hit GitHub releases when that binary is missing.
+const { ensureBinary, resolveOptionalBinary } = require("../lib/binary");
+
+if (resolveOptionalBinary()) {
+  process.exit(0);
+}
 
 ensureBinary().catch((err) => {
   const msg = err && err.message ? err.message : String(err);

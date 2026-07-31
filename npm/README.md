@@ -16,7 +16,7 @@
 
 <p align="center">personal developer CLI<br>git branch stats · coding-agent token usage · self-update</p>
 
-npm wrapper for the [akme](https://github.com/o1x3/akme) binary. On install (or first run) it downloads the matching GitHub release (`akme_<os>_<arch>.tar.gz`), checks `checksums.txt`, and runs it.
+npm wrapper for the [akme](https://github.com/o1x3/akme) binary. Install pulls the matching platform package from the npm CDN (`@o1x3/akme-<os>-<arch>` via `optionalDependencies`). If optional deps are skipped, it falls back to the GitHub release archive with `checksums.txt` verification.
 
 ## Install
 

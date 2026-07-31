@@ -98,25 +98,22 @@ function expectedChecksum(checksumsText, archiveName) {
   return "";
 }
 
-async function ensureBinary() {
-  const override =
-    process.env.AKME_BINARY ||
-    process.env.AKME_NX_BINARY ||
-    process.env.NX_BINARY;
-  if (override) {
-    const resolved = path.resolve(override);
-    if (!fs.existsSync(resolved)) {
-      throw new Error(`akme: AKME_BINARY not found: ${resolved}`);
-    }
-    return resolved;
+/**
+ * Prefer the platform optionalDependency (npm CDN). Falls back to null when
+ * optional deps were omitted (--omit=optional) or scripts-only installs.
+ */
+function resolveOptionalBinary() {
+  const { npmPackage, binarySubpath } = resolvePlatform();
+  try {
+    return require.resolve(`${npmPackage}/${binarySubpath}`, {
+      paths: [packageRoot()],
+    });
+  } catch {
+    return null;
   }
+}
 
-  const version = packageVersion();
-  const dest = binaryPath(version);
-  if (fs.existsSync(dest) && fs.statSync(dest).size > 0) {
-    return dest;
-  }
-
+async function downloadFromGitHub(version, dest) {
   const { archiveName } = resolvePlatform();
   const base = releaseBase(version);
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "akme-"));
@@ -159,6 +156,34 @@ async function ensureBinary() {
   }
 }
 
+async function ensureBinary() {
+  const override =
+    process.env.AKME_BINARY ||
+    process.env.AKME_NX_BINARY ||
+    process.env.NX_BINARY;
+  if (override) {
+    const resolved = path.resolve(override);
+    if (!fs.existsSync(resolved)) {
+      throw new Error(`akme: AKME_BINARY not found: ${resolved}`);
+    }
+    return resolved;
+  }
+
+  const optional = resolveOptionalBinary();
+  if (optional && fs.existsSync(optional) && fs.statSync(optional).size > 0) {
+    return optional;
+  }
+
+  const version = packageVersion();
+  const dest = binaryPath(version);
+  if (fs.existsSync(dest) && fs.statSync(dest).size > 0) {
+    return dest;
+  }
+
+  // Fallback when optionalDependencies were skipped (npm --omit=optional, etc.).
+  return downloadFromGitHub(version, dest);
+}
+
 module.exports = {
   binaryPath,
   ensureBinary,
@@ -166,5 +191,6 @@ module.exports = {
   packageVersion,
   releaseBase,
   repo,
+  resolveOptionalBinary,
   resolvePlatform,
 };
