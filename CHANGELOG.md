@@ -6,12 +6,12 @@
 - GitHub repo / Go module moved to [`o1x3/akme`](https://github.com/o1x3/akme).
 - Env vars are now `AKME_*` (`AKME_NO_UPDATE`, `AKME_BACKGROUND`, `AKME_TRUECOLOR`, `AKME_TOKEN_*`, `AKME_CURSOR_SESSION_TOKEN`, `AKME_CACHE_DIR`, `AKME_INSTALL_DIR`); legacy `NX_*` names still work as fallbacks.
 - Installer installs `~/.local/bin/akme` and migrates old `nx` installs (removes `~/.local/bin/nx`, `/usr/local/bin/nx`, and whatever `command -v nx` resolved to; refreshes PATH markers).
-- npm package `akme` downloads the renamed release assets; README rewritten with npm/GitHub badges.
+- npm package `@o1x3/akme` downloads the renamed release assets (unscoped `akme` blocked by npm name-similarity); README rewritten with npm/GitHub badges.
 
 ## 0.4.6
 
-- Added npm package `akme` so you can run the CLI via `npx akme …`, `npm install -g akme`, or `bunx akme …` (downloads the matching GitHub release binary with checksum verification).
-- Release workflow publishes `akme` to npm on `VERSION` bumps when the `NPM_TOKEN` secret is set.
+- Added npm package `@o1x3/akme` so you can run the CLI via `npx @o1x3/akme …`, `npm install -g @o1x3/akme`, or `bunx @o1x3/akme …` (downloads the matching GitHub release binary with checksum verification).
+- Release workflow publishes `@o1x3/akme` to npm on `VERSION` bumps via Trusted Publishing.
 
 ## 0.4.5
 

@@ -41,8 +41,8 @@ if [ -f npm/package.json ]; then
   npm_version="$(
     node -e 'const p=require("./npm/package.json"); process.stdout.write(String(p.version||""))'
   )"
-  if [ "$npm_name" != "akme" ]; then
-    echo "npm/package.json name must be akme (got ${npm_name})" >&2
+  if [ "$npm_name" != "@o1x3/akme" ]; then
+    echo "npm/package.json name must be @o1x3/akme (got ${npm_name})" >&2
     exit 1
   fi
   if [ "$npm_version" != "$version" ]; then
