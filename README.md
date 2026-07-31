@@ -157,7 +157,7 @@ Releases are driven by `VERSION` and published by GoReleaser, then the same tag 
 
 Update `VERSION`, keep `npm/package.json` version in sync, add a matching `CHANGELOG.md` section, and push to `main`. GitHub Actions creates tag `v<VERSION>`, publishes macOS/Linux `amd64`/`arm64` archives (`akme_<os>_<arch>.tar.gz`), and runs `npm publish` when the `NPM_TOKEN` repository secret is set.
 
-`NPM_TOKEN` must be a **granular Automation token** that bypasses 2FA ([npm tokens](https://www.npmjs.com/settings/~/tokens)). Classic / publish tokens with account 2FA fail in CI with `EOTP`. If GitHub release succeeded but npm publish failed, fix the secret and re-run the `release` workflow with **npm_only=true** (skips tagging / GoReleaser).
+`NPM_TOKEN` must be a **granular Automation token** that bypasses 2FA ([npm tokens](https://www.npmjs.com/settings/~/tokens)). Classic / publish tokens with account 2FA fail in CI with `EOTP` and block the release.
 
 ```sh
 printf '0.5.1\n' > VERSION
