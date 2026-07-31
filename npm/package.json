@@ -1,0 +1,39 @@
+{
+  "name": "akme",
+  "version": "0.4.6",
+  "description": "akme — personal developer CLI (nx) distributed for npx / npm / bun",
+  "license": "MIT",
+  "bin": {
+    "akme": "bin/akme.js"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "scripts/",
+    "README.md"
+  ],
+  "scripts": {
+    "postinstall": "node scripts/postinstall.js",
+    "test": "node --test lib/*.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/o1x3/nx.git",
+    "directory": "npm"
+  },
+  "homepage": "https://github.com/o1x3/nx#readme",
+  "bugs": {
+    "url": "https://github.com/o1x3/nx/issues"
+  },
+  "keywords": [
+    "cli",
+    "nx",
+    "akme",
+    "developer-tools",
+    "token",
+    "git"
+  ]
+}

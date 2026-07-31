@@ -4,6 +4,17 @@
 
 ## Install
 
+npm / npx / bun (package name **`akme`** — publishes with each `VERSION` release):
+
+```sh
+npx akme token -i
+npx akme git stat .
+npm install -g akme
+bunx akme help
+```
+
+Or install the binary directly:
+
 ```sh
 curl -fsSL https://raw.githubusercontent.com/o1x3/nx/main/scripts/install.sh | sh
 ```
@@ -143,20 +154,17 @@ The pre-commit hook runs `scripts/format.sh` first, then `scripts/check.sh`. Add
 
 ## Release Automation
 
-Releases are driven by `VERSION` and published by GoReleaser.
+Releases are driven by `VERSION` and published by GoReleaser, then the same tag is published to npm as [`akme`](https://www.npmjs.com/package/akme).
 
-To release, update `VERSION` and add a matching section to `CHANGELOG.md`, then push to `main`. GitHub Actions creates tag `v<VERSION>` and publishes macOS/Linux `amd64` and `arm64` archives.
+To release, update `VERSION`, `npm/package.json` version, and add a matching section to `CHANGELOG.md`, then push to `main`. GitHub Actions creates tag `v<VERSION>`, publishes macOS/Linux `amd64` and `arm64` archives, and runs `npm publish` for `akme` when the `NPM_TOKEN` repository secret is set (npm Automation token with publish permission).
 
-The installer and auto-updater consume the latest GitHub release assets.
-
-This project is seeded at `0.0.1`.
-
-This project is seeded at `0.0.1`. The initial push to `main` with `VERSION=0.0.1` publishes `v0.0.1`.
+The installer, auto-updater, and `akme` npm wrapper all consume the GitHub release assets.
 
 For later releases:
 
 ```sh
 printf '0.0.2\n' > VERSION
+# keep npm/package.json version in sync
 # add ## 0.0.2 to CHANGELOG.md
 git commit -am "release: v0.0.2"
 git push origin main

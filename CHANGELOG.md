@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.6
+
+- Added npm package `akme` so you can run the CLI via `npx akme …`, `npm install -g akme`, or `bunx akme …` (downloads the matching GitHub release binary with checksum verification).
+- Release workflow publishes `akme` to npm on `VERSION` bumps when the `NPM_TOKEN` secret is set.
+
 ## 0.4.5
 
 - Fixed Cursor dashboard auth cookie id: strip WorkOS connection prefixes (`github|user_…` → `user_…`) so session JWTs authenticate on every machine.
