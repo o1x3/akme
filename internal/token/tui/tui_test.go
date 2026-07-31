@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/o1x3/nx/internal/token/core"
-	"github.com/o1x3/nx/internal/token/ui"
+	"github.com/o1x3/akme/internal/token/core"
+	"github.com/o1x3/akme/internal/token/ui"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"

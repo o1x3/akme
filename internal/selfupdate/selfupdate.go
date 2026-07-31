@@ -16,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/o1x3/nx/internal/envx"
+	"github.com/o1x3/akme/internal/envx"
 )
 
 const (
@@ -91,7 +91,7 @@ func Update(ctx context.Context, opts Options) (Result, error) {
 
 func withDefaults(opts Options) Options {
 	if opts.Repo == "" {
-		opts.Repo = "o1x3/nx"
+		opts.Repo = "o1x3/akme"
 	}
 	if opts.Stdout == nil {
 		opts.Stdout = io.Discard

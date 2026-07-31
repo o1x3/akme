@@ -1,6 +1,6 @@
 # akme
 
-npm distribution of [akme](https://github.com/o1x3/nx) — a personal developer CLI.
+npm distribution of [akme](https://github.com/o1x3/akme) — a personal developer CLI.
 
 ```sh
 npx akme token -i

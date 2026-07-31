@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -eu
 
-repo="${AKME_REPO:-${NX_REPO:-o1x3/nx}}"
+repo="${AKME_REPO:-${NX_REPO:-o1x3/akme}}"
 # Prefer a user-writable bindir so runtime self-update can replace the binary.
 # /usr/local/bin is often root-owned and breaks in-place updates.
 if [ -n "${AKME_INSTALL_DIR:-}" ]; then

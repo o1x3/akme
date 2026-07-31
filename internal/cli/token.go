@@ -8,10 +8,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/o1x3/nx/internal/envx"
-	"github.com/o1x3/nx/internal/token/core"
-	"github.com/o1x3/nx/internal/token/tui"
-	"github.com/o1x3/nx/internal/token/ui"
+	"github.com/o1x3/akme/internal/envx"
+	"github.com/o1x3/akme/internal/token/core"
+	"github.com/o1x3/akme/internal/token/tui"
+	"github.com/o1x3/akme/internal/token/ui"
 
 	lipgloss "charm.land/lipgloss/v2"
 	"github.com/charmbracelet/colorprofile"

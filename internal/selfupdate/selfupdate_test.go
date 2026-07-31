@@ -98,9 +98,9 @@ func TestTagFromReleaseURL(t *testing.T) {
 		raw  string
 		want string
 	}{
-		{"https://github.com/o1x3/nx/releases/tag/v0.2.0", "v0.2.0"},
-		{"https://github.com/o1x3/nx/releases/tag/v1.0.0?foo=1", "v1.0.0"},
-		{"https://github.com/o1x3/nx/releases/tag/v1.2.3/#section", "v1.2.3"},
+		{"https://github.com/o1x3/akme/releases/tag/v0.2.0", "v0.2.0"},
+		{"https://github.com/o1x3/akme/releases/tag/v1.0.0?foo=1", "v1.0.0"},
+		{"https://github.com/o1x3/akme/releases/tag/v1.2.3/#section", "v1.2.3"},
 	}
 	for _, tt := range tests {
 		got, err := tagFromReleaseURL(tt.raw)
@@ -112,7 +112,7 @@ func TestTagFromReleaseURL(t *testing.T) {
 		}
 	}
 
-	if _, err := tagFromReleaseURL("https://github.com/o1x3/nx/releases"); err == nil {
+	if _, err := tagFromReleaseURL("https://github.com/o1x3/akme/releases"); err == nil {
 		t.Fatal("expected error for URL without tag")
 	}
 }
@@ -127,13 +127,13 @@ func TestLatestReleaseUsesRedirectNotAPI(t *testing.T) {
 			return
 		}
 		switch r.URL.Path {
-		case "/o1x3/nx/releases/latest":
+		case "/o1x3/akme/releases/latest":
 			if r.Method != http.MethodHead {
 				t.Errorf("method = %s, want HEAD", r.Method)
 			}
 			sawHead = true
-			http.Redirect(w, r, "/o1x3/nx/releases/tag/v9.9.9", http.StatusFound)
-		case "/o1x3/nx/releases/tag/v9.9.9":
+			http.Redirect(w, r, "/o1x3/akme/releases/tag/v9.9.9", http.StatusFound)
+		case "/o1x3/akme/releases/tag/v9.9.9":
 			w.WriteHeader(http.StatusOK)
 		default:
 			http.NotFound(w, r)
@@ -141,7 +141,7 @@ func TestLatestReleaseUsesRedirectNotAPI(t *testing.T) {
 	}))
 	t.Cleanup(srv.Close)
 
-	tag, err := resolveLatestTag(t.Context(), srv.Client(), srv.URL+"/o1x3/nx/releases/latest")
+	tag, err := resolveLatestTag(t.Context(), srv.Client(), srv.URL+"/o1x3/akme/releases/latest")
 	if err != nil {
 		t.Fatal(err)
 	}

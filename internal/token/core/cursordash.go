@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/o1x3/nx/internal/envx"
+	"github.com/o1x3/akme/internal/envx"
 	"time"
 )
 

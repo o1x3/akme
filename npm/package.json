@@ -21,12 +21,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/o1x3/nx.git",
+    "url": "git+https://github.com/o1x3/akme.git",
     "directory": "npm"
   },
-  "homepage": "https://github.com/o1x3/nx#readme",
+  "homepage": "https://github.com/o1x3/akme#readme",
   "bugs": {
-    "url": "https://github.com/o1x3/nx/issues"
+    "url": "https://github.com/o1x3/akme/issues"
   },
   "keywords": [
     "cli",

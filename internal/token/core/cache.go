@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/o1x3/nx/internal/envx"
+	"github.com/o1x3/akme/internal/envx"
 )
 
 func tokenCacheDir() string {

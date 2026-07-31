@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/o1x3/nx/internal/gitstat"
-	"github.com/o1x3/nx/internal/render"
-	"github.com/o1x3/nx/internal/selfupdate"
+	"github.com/o1x3/akme/internal/gitstat"
+	"github.com/o1x3/akme/internal/render"
+	"github.com/o1x3/akme/internal/selfupdate"
 )
 
 type BuildInfo struct {

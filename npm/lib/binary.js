@@ -11,7 +11,7 @@ const { pipeline } = require("node:stream/promises");
 
 const { resolvePlatform } = require("./platform");
 
-const DEFAULT_REPO = "o1x3/nx";
+const DEFAULT_REPO = "o1x3/akme";
 
 function packageRoot() {
   return path.join(__dirname, "..");

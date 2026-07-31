@@ -2,8 +2,8 @@
 
 [![npm](https://img.shields.io/npm/v/akme.svg)](https://www.npmjs.com/package/akme)
 [![npm downloads](https://img.shields.io/npm/dm/akme.svg)](https://www.npmjs.com/package/akme)
-[![GitHub release](https://img.shields.io/github/v/release/o1x3/nx.svg)](https://github.com/o1x3/nx/releases/latest)
-[![CI](https://github.com/o1x3/nx/actions/workflows/ci.yml/badge.svg)](https://github.com/o1x3/nx/actions/workflows/ci.yml)
+[![GitHub release](https://img.shields.io/github/v/release/o1x3/akme.svg)](https://github.com/o1x3/akme/releases/latest)
+[![CI](https://github.com/o1x3/akme/actions/workflows/ci.yml/badge.svg)](https://github.com/o1x3/akme/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 `akme` is a personal developer CLI — git branch stats, an AI coding-harness token dashboard, and self-update. Formerly `nx`.
@@ -21,13 +21,13 @@ bunx akme help
 **curl installer** (writes `~/.local/bin/akme`, migrates an old `nx` binary if present)
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/o1x3/nx/main/scripts/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/o1x3/akme/main/scripts/install.sh | sh
 ```
 
 Override the install directory (must be user-writable so self-update works):
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/o1x3/nx/main/scripts/install.sh | AKME_INSTALL_DIR="$HOME/bin" sh
+curl -fsSL https://raw.githubusercontent.com/o1x3/akme/main/scripts/install.sh | AKME_INSTALL_DIR="$HOME/bin" sh
 ```
 
 Re-running the installer upgrades `akme`, removes legacy `nx` binaries (`~/.local/bin/nx`, `/usr/local/bin/nx`, and whatever `command -v nx` resolved to), and refreshes PATH markers from the old nx installer.
@@ -126,7 +126,7 @@ Released builds check GitHub for a newer release on every invocation (in the bac
 akme update
 ```
 
-Resolution uses `https://github.com/o1x3/nx/releases/latest` (same as the installer), not the GitHub API.
+Resolution uses `https://github.com/o1x3/akme/releases/latest` (same as the installer), not the GitHub API.
 
 Disable background update checks:
 
