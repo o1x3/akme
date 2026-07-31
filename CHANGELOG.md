@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.0
+
+- Faster `npx @o1x3/akme` / `npm install -g @o1x3/akme`: ship the native binary in platform packages (`@o1x3/akme-darwin-arm64`, `-darwin-x64`, `-linux-arm64`, `-linux-x64`) via `optionalDependencies` (esbuild/Sentry pattern), so installs pull from the npm CDN instead of downloading GitHub release assets after install.
+- Keep GitHub release download as a fallback when optional deps are omitted (`--omit=optional`).
+- Release workflow publishes the four platform packages, then `@o1x3/akme`. Configure Trusted Publishing on each platform package (same `release.yml` workflow).
+
 ## 0.5.1
 
 - Rewrote the npm package README (`npm/README.md`) with matching badges and shorter install-focused copy for the npmjs.com page.

@@ -1,0 +1,27 @@
+{
+  "name": "@o1x3/akme-linux-x64",
+  "version": "0.0.0",
+  "description": "akme native binary for linux x64",
+  "license": "MIT",
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "files": [
+    "bin/akme"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/o1x3/akme.git",
+    "directory": "npm/platforms/linux-x64"
+  },
+  "homepage": "https://github.com/o1x3/akme#readme",
+  "bugs": {
+    "url": "https://github.com/o1x3/akme/issues"
+  }
+}

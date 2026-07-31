@@ -62,25 +62,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Publishes npm package @o1x3/akme at the same VERSION via Trusted
-      # Publishing (OIDC). Do NOT set NODE_AUTH_TOKEN — an empty/_authToken
-      # line from setup-node short-circuits OIDC. Configure the trusted
-      # publisher on https://www.npmjs.com/package/@o1x3/akme → Settings
-      # (GitHub: o1x3/akme, workflow: release.yml).
-      - name: Publish @o1x3/akme to npm
-        working-directory: npm
+      # Publishes platform packages (@o1x3/akme-<os>-<arch>) then the meta
+      # package @o1x3/akme via Trusted Publishing (OIDC). Binaries ship inside
+      # the platform packages (esbuild/Sentry pattern) so npx installs from the
+      # npm CDN instead of downloading GitHub release assets at runtime.
+      # Configure trusted publishers (same workflow) on each package:
+      #   @o1x3/akme, @o1x3/akme-darwin-arm64, @o1x3/akme-darwin-x64,
+      #   @o1x3/akme-linux-arm64, @o1x3/akme-linux-x64
+      # Do NOT set NODE_AUTH_TOKEN — an empty/_authToken line from setup-node
+      # short-circuits OIDC (publish-release.js strips it).
+      - name: Publish @o1x3/akme (+ platform packages) to npm
         run: |
-          version="${{ steps.version.outputs.version }}"
-          npm version "$version" --no-git-tag-version --allow-same-version
-
-          # setup-node writes //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}.
-          # Unset/empty auth blocks OIDC; strip it so Trusted Publishing works.
-          npmrc="${NPM_CONFIG_USERCONFIG:-$HOME/.npmrc}"
-          if [ -f "$npmrc" ]; then
-            tmp="$(mktemp)"
-            grep -v '_authToken' "$npmrc" >"$tmp" || true
-            mv "$tmp" "$npmrc"
-          fi
-          unset NODE_AUTH_TOKEN
-
-          npm publish --access public
+          node npm/scripts/publish-release.js \
+            --version "${{ steps.version.outputs.version }}" \
+            --dist dist

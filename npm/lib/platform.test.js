@@ -2,7 +2,7 @@
 
 const { describe, it } = require("node:test");
 const assert = require("node:assert/strict");
-const { resolvePlatform } = require("./platform");
+const { allPlatforms, resolvePlatform } = require("./platform");
 const { expectedChecksum } = require("./binary");
 
 describe("resolvePlatform", () => {
@@ -10,20 +10,47 @@ describe("resolvePlatform", () => {
     assert.deepEqual(resolvePlatform("darwin", "arm64"), {
       os: "darwin",
       arch: "arm64",
+      nodeOs: "darwin",
+      nodeArch: "arm64",
+      npmPackage: "@o1x3/akme-darwin-arm64",
       archiveName: "akme_darwin_arm64.tar.gz",
+      binarySubpath: "bin/akme",
     });
   });
 
-  it("maps linux/x64 to amd64", () => {
+  it("maps linux/x64 to amd64 + npm x64 package", () => {
     assert.deepEqual(resolvePlatform("linux", "x64"), {
       os: "linux",
       arch: "amd64",
+      nodeOs: "linux",
+      nodeArch: "x64",
+      npmPackage: "@o1x3/akme-linux-x64",
       archiveName: "akme_linux_amd64.tar.gz",
+      binarySubpath: "bin/akme",
     });
+  });
+
+  it("maps darwin/amd64 alias to x64 package", () => {
+    assert.equal(
+      resolvePlatform("darwin", "amd64").npmPackage,
+      "@o1x3/akme-darwin-x64",
+    );
   });
 
   it("rejects windows", () => {
     assert.throws(() => resolvePlatform("win32", "x64"), /unsupported platform/);
+  });
+});
+
+describe("allPlatforms", () => {
+  it("covers the four release targets", () => {
+    const names = allPlatforms().map((p) => p.npmPackage).sort();
+    assert.deepEqual(names, [
+      "@o1x3/akme-darwin-arm64",
+      "@o1x3/akme-darwin-x64",
+      "@o1x3/akme-linux-arm64",
+      "@o1x3/akme-linux-x64",
+    ]);
   });
 });
 
