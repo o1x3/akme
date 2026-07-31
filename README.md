@@ -1,7 +1,7 @@
 # akme
 
-[![npm](https://img.shields.io/npm/v/akme.svg)](https://www.npmjs.com/package/akme)
-[![npm downloads](https://img.shields.io/npm/dm/akme.svg)](https://www.npmjs.com/package/akme)
+[![npm](https://img.shields.io/npm/v/@o1x3/akme.svg)](https://www.npmjs.com/package/@o1x3/akme)
+[![npm downloads](https://img.shields.io/npm/dm/@o1x3/akme.svg)](https://www.npmjs.com/package/@o1x3/akme)
 [![GitHub release](https://img.shields.io/github/v/release/o1x3/akme.svg)](https://github.com/o1x3/akme/releases/latest)
 [![CI](https://github.com/o1x3/akme/actions/workflows/ci.yml/badge.svg)](https://github.com/o1x3/akme/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
@@ -13,9 +13,9 @@
 **npm / npx / bun**
 
 ```sh
-npx akme token -i
-npm install -g akme
-bunx akme help
+npx @o1x3/akme token -i
+npm install -g @o1x3/akme
+bunx @o1x3/akme help
 ```
 
 **curl installer** (writes `~/.local/bin/akme`, migrates an old `nx` binary if present)
@@ -153,11 +153,9 @@ The pre-commit hook runs `scripts/format.sh` first, then `scripts/check.sh`.
 
 ## Release Automation
 
-Releases are driven by `VERSION` and published by GoReleaser, then the same tag is published to npm as [`akme`](https://www.npmjs.com/package/akme).
+Releases are driven by `VERSION` and published by GoReleaser, then the same tag is published to npm as [`@o1x3/akme`](https://www.npmjs.com/package/@o1x3/akme).
 
-Update `VERSION`, keep `npm/package.json` version in sync, add a matching `CHANGELOG.md` section, and push to `main`. GitHub Actions creates tag `v<VERSION>`, publishes macOS/Linux `amd64`/`arm64` archives (`akme_<os>_<arch>.tar.gz`), and runs `npm publish` when the `NPM_TOKEN` repository secret is set.
-
-`NPM_TOKEN` must be a **granular Automation token** that bypasses 2FA ([npm tokens](https://www.npmjs.com/settings/~/tokens)). Classic / publish tokens with account 2FA fail in CI with `EOTP` and block the release.
+Update `VERSION`, keep `npm/package.json` version in sync, add a matching `CHANGELOG.md` section, and push to `main`. GitHub Actions creates tag `v<VERSION>`, publishes macOS/Linux `amd64`/`arm64` archives (`akme_<os>_<arch>.tar.gz`), and runs `npm publish` via **Trusted Publishing** (OIDC — no `NPM_TOKEN`). Configure the trusted publisher once on the package settings page: GitHub `o1x3` / `akme` / workflow `release.yml`.
 
 ```sh
 printf '0.5.1\n' > VERSION

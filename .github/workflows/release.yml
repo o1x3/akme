@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write # npm Trusted Publishing (OIDC)
 
 jobs:
   release-version:
@@ -28,6 +29,9 @@ jobs:
         with:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
+
+      - name: Ensure npm CLI supports Trusted Publishing
+        run: npm install -g npm@latest
 
       - name: Validate version
         id: version
@@ -58,34 +62,25 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Publishes npm package `akme` at the same VERSION. The package downloads
-      # the GitHub release binary on install / first run, so goreleaser must
-      # finish first. Requires repo secret NPM_TOKEN — a granular Automation
-      # token that bypasses 2FA. Classic/publish tokens with account 2FA fail
-      # with EOTP in CI and cannot publish.
-      - name: Publish akme to npm
+      # Publishes npm package @o1x3/akme at the same VERSION via Trusted
+      # Publishing (OIDC). Do NOT set NODE_AUTH_TOKEN — an empty/_authToken
+      # line from setup-node short-circuits OIDC. Configure the trusted
+      # publisher on https://www.npmjs.com/package/@o1x3/akme → Settings
+      # (GitHub: o1x3/akme, workflow: release.yml).
+      - name: Publish @o1x3/akme to npm
         working-directory: npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
-            echo "::error::NPM_TOKEN secret is not set; cannot publish akme@${{ steps.version.outputs.version }}"
-            exit 1
-          fi
-
           version="${{ steps.version.outputs.version }}"
           npm version "$version" --no-git-tag-version --allow-same-version
 
-          set +e
-          publish_log="$(mktemp)"
-          npm publish --access public >"$publish_log" 2>&1
-          status=$?
-          set -e
-          cat "$publish_log"
-
-          if [ "$status" -ne 0 ]; then
-            if grep -q "EOTP" "$publish_log"; then
-              echo "::error::npm publish failed with EOTP. NPM_TOKEN must be a granular Automation token that bypasses 2FA (https://www.npmjs.com/settings/~/tokens). Replace the repo secret and bump VERSION to release again."
-            fi
-            exit "$status"
+          # setup-node writes //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}.
+          # Unset/empty auth blocks OIDC; strip it so Trusted Publishing works.
+          npmrc="${NPM_CONFIG_USERCONFIG:-$HOME/.npmrc}"
+          if [ -f "$npmrc" ]; then
+            tmp="$(mktemp)"
+            grep -v '_authToken' "$npmrc" >"$tmp" || true
+            mv "$tmp" "$npmrc"
           fi
+          unset NODE_AUTH_TOKEN
+
+          npm publish --access public
