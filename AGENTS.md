@@ -72,7 +72,7 @@ The expected change shape is:
 
 ## Release Model
 
-`VERSION` is the release trigger. GoReleaser owns GitHub releases and macOS/Linux artifacts. Runtime self-update consumes the latest GitHub release asset for the current OS and architecture. The `akme` npm package is a second distribution channel: `.github/workflows/release.yml` publishes it at the same `VERSION` right after GoReleaser, because the package downloads the GitHub release binary on install/first run (`npm/lib/binary.js`), so the release assets must exist first. npm publish is gated on the `NPM_TOKEN` repo secret (the step warns and skips when it is unset).
+`VERSION` is the release trigger. GoReleaser owns GitHub releases and macOS/Linux artifacts. Runtime self-update consumes the latest GitHub release asset for the current OS and architecture. The `akme` npm package is a second distribution channel: `.github/workflows/release.yml` publishes it at the same `VERSION` right after GoReleaser, because the package downloads the GitHub release binary on install/first run (`npm/lib/binary.js`), so the release assets must exist first. npm publish is gated on the `NPM_TOKEN` repo secret (the step warns and skips when it is unset). That secret must be a granular **Automation** token that bypasses 2FA — classic/publish tokens with account 2FA fail with `EOTP` in CI. If the GitHub release already published but npm failed, re-run `release` via `workflow_dispatch` with `npm_only=true` after fixing the secret (skips tag + GoReleaser).
 
 When a user asks for a command to be built and deployed, the expected final change includes:
 

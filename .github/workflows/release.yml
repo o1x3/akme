@@ -6,6 +6,11 @@ on:
     paths:
       - VERSION
   workflow_dispatch:
+    inputs:
+      npm_only:
+        description: "Skip GitHub tag/GoReleaser; only publish npm for current VERSION (recover after a failed npm step)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -20,6 +25,7 @@ jobs:
           fetch-depth: 0
 
       - uses: actions/setup-go@v7.0.0
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.npm_only != true }}
         with:
           go-version-file: go.mod
           cache: true
@@ -36,8 +42,14 @@ jobs:
           version="$(cat VERSION)"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=v$version" >> "$GITHUB_OUTPUT"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.npm_only }}" = "true" ]; then
+            echo "npm_only=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "npm_only=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Create release tag
+        if: ${{ steps.version.outputs.npm_only != 'true' }}
         run: |
           tag="${{ steps.version.outputs.tag }}"
 
@@ -52,6 +64,7 @@ jobs:
           git push origin "$tag"
 
       - uses: goreleaser/goreleaser-action@v7.2.3
+        if: ${{ steps.version.outputs.npm_only != 'true' }}
         with:
           version: "~> v2"
           args: release --clean
@@ -60,16 +73,49 @@ jobs:
 
       # Publishes npm package `akme` at the same VERSION. The package downloads
       # the GitHub release binary on install / first run, so goreleaser must
-      # finish first. Requires repo secret NPM_TOKEN (npm Automation token).
+      # finish first (or the GitHub release must already exist for npm_only).
+      #
+      # NPM_TOKEN must be a granular Automation token that bypasses 2FA.
+      # Classic / "publish" tokens with account 2FA fail with EOTP in CI.
       - name: Publish akme to npm
         working-directory: npm
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
             echo "::warning::NPM_TOKEN secret is not set; skipped npm publish for akme@${{ steps.version.outputs.version }}"
             exit 0
           fi
+
           version="${{ steps.version.outputs.version }}"
+          tag="${{ steps.version.outputs.tag }}"
+
+          if [ "${{ steps.version.outputs.npm_only }}" = "true" ]; then
+            if ! gh release view "$tag" >/dev/null 2>&1; then
+              echo "::error::GitHub release $tag does not exist; cannot publish npm-only. Run a full release first."
+              exit 1
+            fi
+            if npm view "akme@$version" version >/dev/null 2>&1; then
+              echo "akme@$version is already on npm; nothing to do."
+              exit 0
+            fi
+          fi
+
           npm version "$version" --no-git-tag-version --allow-same-version
-          npm publish --access public
+
+          set +e
+          publish_log="$(mktemp)"
+          npm publish --access public >"$publish_log" 2>&1
+          status=$?
+          set -e
+          cat "$publish_log"
+
+          if [ "$status" -ne 0 ]; then
+            if grep -q "EOTP" "$publish_log"; then
+              echo "::error::npm publish failed with EOTP (one-time password required). The NPM_TOKEN secret is not usable in CI."
+              echo "::error::Replace NPM_TOKEN with a granular Automation token that bypasses 2FA: https://www.npmjs.com/settings/~/tokens → Granular Access Token → Automation (or disable 'Require two-factor authentication' on the token)."
+              echo "::error::After updating the secret, re-run this workflow with npm_only=true to publish akme@$version without re-tagging."
+            fi
+            exit "$status"
+          fi
