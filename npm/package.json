@@ -1,7 +1,7 @@
 {
   "name": "@o1x3/akme",
-  "version": "0.5.0",
-  "description": "akme: personal developer CLI (git stats, coding-agent token dashboard, self-update)",
+  "version": "0.5.1",
+  "description": "Personal developer CLI: git branch stats, coding-agent token usage, self-update",
   "license": "MIT",
   "bin": {
     "akme": "bin/akme.js"
@@ -35,8 +35,11 @@
     "cli",
     "akme",
     "developer-tools",
-    "token",
     "git",
-    "npx"
+    "token",
+    "npx",
+    "codex",
+    "claude",
+    "cursor"
   ]
 }
