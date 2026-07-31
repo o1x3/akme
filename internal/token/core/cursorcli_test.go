@@ -43,7 +43,7 @@ func TestLoadCursorCLI(t *testing.T) {
 		"\x00\x01binary garbage",       // non-JSON blob, skipped
 	)
 
-	t.Setenv("NX_TOKEN_NO_CACHE", "1")
+	t.Setenv("AKME_TOKEN_NO_CACHE", "1")
 	a := Load(Cursor)
 
 	if a.Sessions != 1 {
@@ -92,7 +92,7 @@ func TestLoadCursorCLISecondsAndMtime(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Setenv("NX_TOKEN_NO_CACHE", "1")
+	t.Setenv("AKME_TOKEN_NO_CACHE", "1")
 	a := Load(Cursor)
 
 	if a.Sessions != 2 {

@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/o1x3/akme/internal/envx"
 	"time"
 )
 
@@ -41,12 +43,7 @@ type cursorDashUsage struct {
 }
 
 func cursorDashDisabled() bool {
-	switch strings.ToLower(os.Getenv("NX_TOKEN_CURSOR_LOCAL")) {
-	case "1", "true", "yes":
-		return true
-	default:
-		return false
-	}
+	return envx.Truthy("AKME_TOKEN_CURSOR_LOCAL", "NX_TOKEN_CURSOR_LOCAL")
 }
 
 // applyCursorDashboard replaces a's token ledgers with Cursor dashboard
@@ -281,7 +278,7 @@ func (c *cursorDashClient) do(method, path string, body any, out any) error {
 	}
 	req.Header.Set("Cookie", "WorkosCursorSessionToken="+c.sess.cookieValue())
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", "nx-token/cursor-dashboard")
+	req.Header.Set("User-Agent", "akme-token/cursor-dashboard")
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Origin", "https://cursor.com")

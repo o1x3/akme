@@ -12,9 +12,16 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7.0.0
-      - uses: actions/setup-go@v6.5.0
+      - uses: actions/checkout@v7.0.1
+
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version-file: go.mod
           cache: true
-      - run: go test ./...
+
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: "22"
+
+      - name: Check
+        run: scripts/check.sh

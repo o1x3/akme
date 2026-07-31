@@ -31,7 +31,7 @@ import (
 //  5. Else "auto"
 //
 // Local figures undercount the Cursor admin dashboard (cache + cumulative
-// billed input are server-side only). Set NX_TOKEN_CURSOR_LOCAL=1 to skip
+// billed input are server-side only). Set AKME_TOKEN_CURSOR_LOCAL=1 to skip
 // the dashboard enricher.
 
 // loadCursor loads Cursor usage from both the IDE and the CLI, then enriches
@@ -565,7 +565,7 @@ func openDB(path string) (*sql.DB, func(), error) {
 }
 
 func openDBCopy(path string) (*sql.DB, func(), error) {
-	dir, err := os.MkdirTemp("", "nx-sqlite-")
+	dir, err := os.MkdirTemp("", "akme-sqlite-")
 	if err != nil {
 		return nil, nil, err
 	}

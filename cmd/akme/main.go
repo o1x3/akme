@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/o1x3/nx/internal/cli"
-	"github.com/o1x3/nx/internal/selfupdate"
+	"github.com/o1x3/akme/internal/cli"
+	"github.com/o1x3/akme/internal/selfupdate"
 )
 
 var (
@@ -24,7 +24,7 @@ func main() {
 		Date:    date,
 	}
 
-	// Explicit `nx update` does its own check; skip the background one so the
+	// Explicit `akme update` does its own check; skip the background one so the
 	// two paths do not race to replace the binary.
 	updateDone := make(chan struct{})
 	if !isUpdateCommand(os.Args[1:]) {
@@ -32,7 +32,7 @@ func main() {
 			defer close(updateDone)
 			selfupdate.Check(ctx, selfupdate.Options{
 				CurrentVersion: version,
-				Repo:           "o1x3/nx",
+				Repo:           "o1x3/akme",
 				Stderr:         os.Stderr,
 			})
 		}()

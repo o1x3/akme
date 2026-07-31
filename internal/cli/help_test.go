@@ -19,47 +19,47 @@ func TestNestedHelp(t *testing.T) {
 		{
 			name: "root",
 			args: []string{"help"},
-			want: []string{"nx help [command...]", "nx help git", "nx help token", "nx help update"},
+			want: []string{"akme help [command...]", "akme help git", "akme help token", "akme help update"},
 		},
 		{
 			name: "update",
 			args: []string{"help", "update"},
-			want: []string{"nx update", "releases/latest", "NX_NO_UPDATE"},
+			want: []string{"akme update", "releases/latest", "AKME_NO_UPDATE"},
 		},
 		{
 			name: "update help via command",
 			args: []string{"update", "--help"},
-			want: []string{"nx update", "writable install directory"},
+			want: []string{"akme update", "writable install directory"},
 		},
 		{
 			name: "git overview",
 			args: []string{"help", "git"},
-			want: []string{"nx git <subcommand>", "nx help git stat", "stat"},
+			want: []string{"akme git <subcommand>", "akme help git stat", "stat"},
 		},
 		{
 			name: "git stat",
 			args: []string{"help", "git", "stat"},
-			want: []string{"nx git stat [--jobs <n>]", "--jobs <n>", "nx git stat ."},
+			want: []string{"akme git stat [--jobs <n>]", "--jobs <n>", "akme git stat ."},
 		},
 		{
 			name: "git help via domain",
 			args: []string{"git", "help"},
-			want: []string{"nx git <subcommand>", "nx help git stat"},
+			want: []string{"akme git <subcommand>", "akme help git stat"},
 		},
 		{
 			name: "git help stat via domain",
 			args: []string{"git", "help", "stat"},
-			want: []string{"nx git stat [--jobs <n>]", "origin/HEAD"},
+			want: []string{"akme git stat [--jobs <n>]", "origin/HEAD"},
 		},
 		{
 			name: "token overview",
 			args: []string{"help", "token"},
-			want: []string{"nx token [harness]", "nx help token [topic]", "Nest help for one topic"},
+			want: []string{"akme token [harness]", "akme help token [topic]", "Nest help for one topic"},
 		},
 		{
 			name: "token tokens alias",
 			args: []string{"help", "tokens"},
-			want: []string{"nx token [harness]", "Nest help for one topic"},
+			want: []string{"akme token [harness]", "Nest help for one topic"},
 		},
 		{
 			name: "token harness topic",
@@ -74,17 +74,17 @@ func TestNestedHelp(t *testing.T) {
 		{
 			name: "token topics index",
 			args: []string{"help", "token", "topics"},
-			want: []string{"nx help token [topic]", "harness", "examples"},
+			want: []string{"akme help token [topic]", "harness", "examples"},
 		},
 		{
 			name: "version help",
 			args: []string{"help", "version"},
-			want: []string{"nx version", "-v, --version"},
+			want: []string{"akme version", "-v, --version"},
 		},
 		{
 			name: "help about help",
 			args: []string{"help", "help"},
-			want: []string{"nx help [command...]", "Keep nesting"},
+			want: []string{"akme help [command...]", "Keep nesting"},
 		},
 		{
 			name:    "unknown root topic",
@@ -144,7 +144,7 @@ func TestHelpForDirect(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(text, "nx help [command...]") {
+	if !strings.Contains(text, "akme help [command...]") {
 		t.Fatalf("unexpected root help:\n%s", text)
 	}
 }

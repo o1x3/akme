@@ -6,8 +6,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/o1x3/nx/internal/token/core"
-	"github.com/o1x3/nx/internal/token/ui"
+	"github.com/o1x3/akme/internal/token/core"
+	"github.com/o1x3/akme/internal/token/ui"
 )
 
 func TestParseTokenArgs(t *testing.T) {
@@ -255,7 +255,7 @@ func TestRunTokenQuietNoUsage(t *testing.T) {
 	if exitErr.Error() != "" {
 		t.Fatalf("expected silent ExitError, got %q", exitErr.Error())
 	}
-	if got := stdout.String(); got != "nx token: no usage for this selection\n" {
+	if got := stdout.String(); got != "akme token: no usage for this selection\n" {
 		t.Fatalf("stdout = %q", got)
 	}
 }

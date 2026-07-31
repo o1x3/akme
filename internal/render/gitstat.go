@@ -6,7 +6,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/table"
 
-	"github.com/o1x3/nx/internal/gitstat"
+	"github.com/o1x3/akme/internal/gitstat"
 )
 
 func GitStats(stats []gitstat.Stat) string {

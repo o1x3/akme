@@ -8,9 +8,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/o1x3/nx/internal/token/core"
-	"github.com/o1x3/nx/internal/token/tui"
-	"github.com/o1x3/nx/internal/token/ui"
+	"github.com/o1x3/akme/internal/envx"
+	"github.com/o1x3/akme/internal/token/core"
+	"github.com/o1x3/akme/internal/token/tui"
+	"github.com/o1x3/akme/internal/token/ui"
 
 	lipgloss "charm.land/lipgloss/v2"
 	"github.com/charmbracelet/colorprofile"
@@ -90,7 +91,7 @@ func parseTokenArgs(args []string) (tokenOptions, error) {
 			o.compare = true
 
 		default:
-			return o, ExitError{Code: 2, Err: fmt.Errorf("unknown argument %q (try: nx help token)", a)}
+			return o, ExitError{Code: 2, Err: fmt.Errorf("unknown argument %q (try: akme help token)", a)}
 		}
 	}
 	return o, nil
@@ -108,7 +109,7 @@ func (a App) runToken(ctx context.Context, args []string, stdout io.Writer) erro
 		return nil
 	}
 
-	forced := os.Getenv("NX_TRUECOLOR") != ""
+	forced := envx.First("AKME_TRUECOLOR", "NX_TRUECOLOR") != ""
 	tty := term.IsTerminal(os.Stdout.Fd())
 
 	now := time.Now()
@@ -124,12 +125,12 @@ func (a App) runToken(ctx context.Context, args []string, stdout io.Writer) erro
 	}
 
 	// Light/dark detection so foreground colours stay legible on any terminal.
-	// nx token paints no background; it adapts to yours. NX_BACKGROUND overrides
+	// akme token paints no background; it adapts to yours. AKME_BACKGROUND overrides
 	// (and skips the terminal query, which momentarily raw-modes the tty).
 	// Non-TTY output defaults to the dark palette, matching v1 behaviour.
 	dark := true
 	darkLocked := false
-	switch os.Getenv("NX_BACKGROUND") {
+	switch envx.First("AKME_BACKGROUND", "NX_BACKGROUND") {
 	case "light":
 		dark, darkLocked = false, true
 	case "dark":
@@ -177,9 +178,9 @@ func (a App) runToken(ctx context.Context, args []string, stdout io.Writer) erro
 	maybeCursorHint(o.harness, s)
 
 	// Nudge toward the interactive view when on a real terminal. Update checks
-	// are nx-wide (selfupdate), not per-command, so no notice is printed here.
+	// are akme-wide (selfupdate), not per-command, so no notice is printed here.
 	if tty {
-		fmt.Fprintln(out, ui.Hint("run `nx token -i` for the interactive view"))
+		fmt.Fprintln(out, ui.Hint("run `akme token -i` for the interactive view"))
 	}
 	return nil
 }
@@ -202,11 +203,11 @@ func tokenTag(o tokenOptions) string {
 func runTokenQuiet(o tokenOptions, now time.Time, stdout io.Writer) error {
 	s := core.Summarize(core.Load(o.harness), o.rng, now)
 	if !s.HasData() {
-		fmt.Fprintln(stdout, "nx token: no usage for this selection")
+		fmt.Fprintln(stdout, "akme token: no usage for this selection")
 		maybeCursorHint(o.harness, s)
 		return ExitError{Code: 3}
 	}
-	fmt.Fprintf(stdout, "nx token%s %s tok · %s msgs · %dd streak · %s\n",
+	fmt.Fprintf(stdout, "akme token%s %s tok · %s msgs · %dd streak · %s\n",
 		tokenTag(o), core.FormatTokens(s.TotalTokens), core.FormatInt(s.Messages),
 		s.CurrentStreak, s.FavModel)
 	return nil
@@ -214,7 +215,7 @@ func runTokenQuiet(o tokenOptions, now time.Time, stdout io.Writer) error {
 
 // runTokenJSON emits the machine-readable summary: one indented object for a
 // single harness, or NDJSON (one compact object per concrete harness) for
-// "all", so `nx token all json | jq -s` works.
+// "all", so `akme token all json | jq -s` works.
 func runTokenJSON(o tokenOptions, now time.Time, stdout io.Writer) error {
 	enc := json.NewEncoder(stdout)
 	if o.harness == core.Combined {
@@ -252,7 +253,7 @@ func maybeCursorHint(harness string, s core.Summary) {
 		return
 	}
 	if hint := core.CursorHintFor(s); hint != "" {
-		fmt.Fprintln(os.Stderr, "nx token:", hint)
+		fmt.Fprintln(os.Stderr, "akme token:", hint)
 	}
 }
 
@@ -274,12 +275,12 @@ func runTokenCompare(o tokenOptions, now time.Time, stdout io.Writer) error {
 }
 
 func tokenHelpText() string {
-	return `nx token — token stats across your AI coding harnesses
+	return `akme token — token stats across your AI coding harnesses
 
 USAGE
-  nx token [harness] [range] [tab] [-i]
-  nx token [harness] [range] (json | quiet | compare)
-  nx help token [topic]
+  akme token [harness] [range] [tab] [-i]
+  akme token [harness] [range] (json | quiet | compare)
+  akme help token [topic]
 
 HARNESS   (default: all)
   claude            Claude Code        ~/.claude + ~/.config/claude
@@ -322,20 +323,20 @@ FLAGS
   -h, --help        this help
 
 ENV
-  NX_BACKGROUND     light|dark — override terminal background detection
-  NX_TRUECOLOR      set to force 24-bit colour
-  NX_TOKEN_NO_CACHE set to bypass the on-disk aggregate cache
-  NX_TOKEN_CURSOR_LOCAL set to skip Cursor dashboard (local estimates only)
-  NX_CURSOR_SESSION_TOKEN / CURSOR_SESSION_TOKEN — Cursor dashboard JWT
+  AKME_BACKGROUND     light|dark — override terminal background detection
+  AKME_TRUECOLOR      set to force 24-bit colour
+  AKME_TOKEN_NO_CACHE set to bypass the on-disk aggregate cache
+  AKME_TOKEN_CURSOR_LOCAL set to skip Cursor dashboard (local estimates only)
+  AKME_CURSOR_SESSION_TOKEN / CURSOR_SESSION_TOKEN — Cursor dashboard JWT
   CLAUDE_CONFIG_DIR / CODEX_HOME / PI_AGENT_DIR — harness data roots
 
 EXIT
   0 ok · 2 bad args · 3 no usage for the selection (output modes)
 
 EXAMPLES
-  nx token               nx token codex 7d cost      nx token claude punchcard
-  nx token all json      nx token 30d compare        nx token pi trend -i
+  akme token               akme token codex 7d cost      akme token claude punchcard
+  akme token all json      akme token 30d compare        akme token pi trend -i
 
 Nest help for one topic:
-  nx help token harness · range · view · output · flags · env · exit · examples`
+  akme help token harness · range · view · output · flags · env · exit · examples`
 }

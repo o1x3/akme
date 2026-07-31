@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/o1x3/nx/internal/token/core"
-	"github.com/o1x3/nx/internal/token/ui"
+	"github.com/o1x3/akme/internal/token/core"
+	"github.com/o1x3/akme/internal/token/ui"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -145,7 +145,7 @@ func TestTUIHarnessCycleReachesNewHarnesses(t *testing.T) {
 	}
 }
 
-// An NX_BACKGROUND override must survive interactive mode: no background
+// An AKME_BACKGROUND override must survive interactive mode: no background
 // query at startup, and terminal answers that do arrive are ignored.
 func TestTUIDarkLocked(t *testing.T) {
 	m := fixedModel()

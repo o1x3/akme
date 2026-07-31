@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/o1x3/nx/internal/gitstat"
-	"github.com/o1x3/nx/internal/render"
-	"github.com/o1x3/nx/internal/selfupdate"
+	"github.com/o1x3/akme/internal/gitstat"
+	"github.com/o1x3/akme/internal/render"
+	"github.com/o1x3/akme/internal/selfupdate"
 )
 
 type BuildInfo struct {
@@ -35,7 +35,7 @@ func (a App) Run(ctx context.Context, args []string, stdout, stderr io.Writer) e
 	case "help", "-h", "--help":
 		return a.runHelp(args[1:], stdout)
 	case "version", "-v", "--version":
-		fmt.Fprintf(stdout, "nx %s (%s, %s)\n", a.info.Version, a.info.Commit, a.info.Date)
+		fmt.Fprintf(stdout, "akme %s (%s, %s)\n", a.info.Version, a.info.Commit, a.info.Date)
 		return nil
 	case "git":
 		return a.runGit(ctx, args[1:], stdout)
@@ -54,7 +54,7 @@ func (a App) runUpdate(ctx context.Context, args []string, stdout, stderr io.Wri
 		case "help", "-h", "--help":
 			return a.runHelp([]string{"update"}, stdout)
 		default:
-			return ExitError{Code: 2, Err: fmt.Errorf("usage: nx update\n\nTry: nx help update")}
+			return ExitError{Code: 2, Err: fmt.Errorf("usage: akme update\n\nTry: akme help update")}
 		}
 	}
 
@@ -126,7 +126,7 @@ func parseGitStatArgs(args []string) (gitstat.CollectOptions, []string, error) {
 	}
 
 	if len(folders) == 0 {
-		return gitstat.CollectOptions{}, nil, ExitError{Code: 2, Err: fmt.Errorf("usage: nx git stat [--jobs <n>] <folder> [folder...]\n\nTry: nx help git stat")}
+		return gitstat.CollectOptions{}, nil, ExitError{Code: 2, Err: fmt.Errorf("usage: akme git stat [--jobs <n>] <folder> [folder...]\n\nTry: akme help git stat")}
 	}
 
 	return opts, folders, nil

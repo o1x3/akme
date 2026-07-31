@@ -1,4 +1,4 @@
-// Package tui provides the interactive Bubble Tea front-end for nx. It
+// Package tui provides the interactive Bubble Tea front-end for akme. It
 // reuses the same lipgloss card renderer as the static output, but lets you
 // flip between harnesses, tabs and time ranges live.
 package tui
@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/o1x3/nx/internal/token/core"
-	"github.com/o1x3/nx/internal/token/ui"
+	"github.com/o1x3/akme/internal/token/core"
+	"github.com/o1x3/akme/internal/token/ui"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -24,8 +24,8 @@ var (
 // Options carries terminal state resolved by the CLI layer into the program.
 type Options struct {
 	Dark           bool // initial background guess from the CLI's detection
-	DarkLocked     bool // NX_BACKGROUND set: never re-detect the background
-	ForceTruecolor bool // NX_TRUECOLOR set: emit 24-bit colour regardless
+	DarkLocked     bool // AKME_BACKGROUND set: never re-detect the background
+	ForceTruecolor bool // AKME_TRUECOLOR set: emit 24-bit colour regardless
 }
 
 type model struct {
@@ -67,7 +67,7 @@ func indexOf(s []string, v string, def int) int {
 
 func (m model) Init() tea.Cmd {
 	if m.opts.DarkLocked {
-		return nil // NX_BACKGROUND override: don't ask the terminal
+		return nil // AKME_BACKGROUND override: don't ask the terminal
 	}
 	return tea.RequestBackgroundColor
 }

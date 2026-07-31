@@ -78,9 +78,9 @@ func TestReadCursorAccessTokenFromItemTable(t *testing.T) {
 func TestApplyCursorDashboard(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
-	t.Setenv("NX_TOKEN_CURSOR_LOCAL", "0")
-	t.Setenv("NX_TOKEN_NO_CACHE", "1")
-	t.Setenv("NX_CACHE_DIR", filepath.Join(home, "cache"))
+	t.Setenv("AKME_TOKEN_CURSOR_LOCAL", "0")
+	t.Setenv("AKME_TOKEN_NO_CACHE", "1")
+	t.Setenv("AKME_CACHE_DIR", filepath.Join(home, "cache"))
 
 	jwt := testJWT("user_01DASH")
 	makeSQLiteDB(t, cursorStatePath(home),
@@ -167,8 +167,8 @@ func TestApplyCursorDashboard(t *testing.T) {
 func TestApplyCursorDashboardSoftFail(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
-	t.Setenv("NX_TOKEN_CURSOR_LOCAL", "0")
-	t.Setenv("NX_TOKEN_NO_CACHE", "1")
+	t.Setenv("AKME_TOKEN_CURSOR_LOCAL", "0")
+	t.Setenv("AKME_TOKEN_NO_CACHE", "1")
 	// No ItemTable token → soft fail, keep local estimates.
 	ts := time.Date(2026, 6, 20, 10, 0, 0, 0, time.Local).Format(time.RFC3339)
 	makeSQLiteDB(t, cursorStatePath(home),
@@ -190,8 +190,8 @@ func TestApplyCursorDashboardSoftFail(t *testing.T) {
 func TestCursorDashLocalOptOut(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
-	t.Setenv("NX_TOKEN_CURSOR_LOCAL", "1")
-	t.Setenv("NX_CURSOR_SESSION_TOKEN", testJWT("user_01SKIP"))
+	t.Setenv("AKME_TOKEN_CURSOR_LOCAL", "1")
+	t.Setenv("AKME_CURSOR_SESSION_TOKEN", testJWT("user_01SKIP"))
 	called := false
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		called = true
@@ -207,7 +207,7 @@ func TestCursorDashLocalOptOut(t *testing.T) {
 	a.TokensEstimated = true
 	applyCursorDashboard(a)
 	if called {
-		t.Error("dashboard should not be contacted when NX_TOKEN_CURSOR_LOCAL=1")
+		t.Error("dashboard should not be contacted when AKME_TOKEN_CURSOR_LOCAL=1")
 	}
 	if a.InputTokens != 7 || !a.TokensEstimated {
 		t.Errorf("aggregate mutated: in=%d est=%v", a.InputTokens, a.TokensEstimated)
@@ -220,10 +220,10 @@ func TestCursorDashLocalOptOut(t *testing.T) {
 func TestApplyCursorDashboardEmptyKeepsLocal(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
-	t.Setenv("NX_TOKEN_CURSOR_LOCAL", "0")
-	t.Setenv("NX_TOKEN_NO_CACHE", "1")
-	t.Setenv("NX_CACHE_DIR", filepath.Join(home, "cache"))
-	t.Setenv("NX_CURSOR_SESSION_TOKEN", testJWT("user_01EMPTY"))
+	t.Setenv("AKME_TOKEN_CURSOR_LOCAL", "0")
+	t.Setenv("AKME_TOKEN_NO_CACHE", "1")
+	t.Setenv("AKME_CACHE_DIR", filepath.Join(home, "cache"))
+	t.Setenv("AKME_CURSOR_SESSION_TOKEN", testJWT("user_01EMPTY"))
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
@@ -272,10 +272,10 @@ func TestApplyCursorDashboardEmptyKeepsLocal(t *testing.T) {
 func TestApplyCursorDashboardTeamFallback(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
-	t.Setenv("NX_TOKEN_CURSOR_LOCAL", "0")
-	t.Setenv("NX_TOKEN_NO_CACHE", "1")
-	t.Setenv("NX_CACHE_DIR", filepath.Join(home, "cache"))
-	t.Setenv("NX_CURSOR_SESSION_TOKEN", testJWT("user_01TEAM"))
+	t.Setenv("AKME_TOKEN_CURSOR_LOCAL", "0")
+	t.Setenv("AKME_TOKEN_NO_CACHE", "1")
+	t.Setenv("AKME_CACHE_DIR", filepath.Join(home, "cache"))
+	t.Setenv("AKME_CURSOR_SESSION_TOKEN", testJWT("user_01TEAM"))
 
 	day := time.Date(2026, 7, 1, 12, 0, 0, 0, time.Local)
 	ts := fmt.Sprintf("%d", day.UnixMilli())
@@ -377,7 +377,7 @@ func TestRollupCursorEvents(t *testing.T) {
 
 func TestMain(m *testing.M) {
 	// Keep ambient Cursor session tokens from poisoning local-parser tests.
-	os.Unsetenv("NX_CURSOR_SESSION_TOKEN")
+	os.Unsetenv("AKME_CURSOR_SESSION_TOKEN")
 	os.Unsetenv("CURSOR_SESSION_TOKEN")
 	os.Exit(m.Run())
 }

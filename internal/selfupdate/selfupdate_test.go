@@ -34,11 +34,11 @@ func TestNewer(t *testing.T) {
 
 func TestChecksumForArchive(t *testing.T) {
 	checksums := `
-abc123  nx_darwin_arm64.tar.gz
-def456 *nx_linux_amd64.tar.gz
+abc123  akme_darwin_arm64.tar.gz
+def456 *akme_linux_amd64.tar.gz
 `
 
-	got, ok := checksumForArchive(checksums, "nx_linux_amd64.tar.gz")
+	got, ok := checksumForArchive(checksums, "akme_linux_amd64.tar.gz")
 	if !ok {
 		t.Fatal("checksum not found")
 	}
@@ -66,7 +66,7 @@ func TestCanWriteDir(t *testing.T) {
 }
 
 func TestExtractBinaryFallsBackOutsideTargetDir(t *testing.T) {
-	archivePath := writeTestArchive(t, []byte("fake-nx-binary"))
+	archivePath := writeTestArchive(t, []byte("fake-akme-binary"))
 	readonly := t.TempDir()
 	if err := os.Chmod(readonly, 0o555); err != nil {
 		t.Fatal(err)
@@ -88,7 +88,7 @@ func TestExtractBinaryFallsBackOutsideTargetDir(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if string(raw) != "fake-nx-binary" {
+	if string(raw) != "fake-akme-binary" {
 		t.Fatalf("extracted content = %q", raw)
 	}
 }
@@ -98,9 +98,9 @@ func TestTagFromReleaseURL(t *testing.T) {
 		raw  string
 		want string
 	}{
-		{"https://github.com/o1x3/nx/releases/tag/v0.2.0", "v0.2.0"},
-		{"https://github.com/o1x3/nx/releases/tag/v1.0.0?foo=1", "v1.0.0"},
-		{"https://github.com/o1x3/nx/releases/tag/v1.2.3/#section", "v1.2.3"},
+		{"https://github.com/o1x3/akme/releases/tag/v0.2.0", "v0.2.0"},
+		{"https://github.com/o1x3/akme/releases/tag/v1.0.0?foo=1", "v1.0.0"},
+		{"https://github.com/o1x3/akme/releases/tag/v1.2.3/#section", "v1.2.3"},
 	}
 	for _, tt := range tests {
 		got, err := tagFromReleaseURL(tt.raw)
@@ -112,7 +112,7 @@ func TestTagFromReleaseURL(t *testing.T) {
 		}
 	}
 
-	if _, err := tagFromReleaseURL("https://github.com/o1x3/nx/releases"); err == nil {
+	if _, err := tagFromReleaseURL("https://github.com/o1x3/akme/releases"); err == nil {
 		t.Fatal("expected error for URL without tag")
 	}
 }
@@ -127,13 +127,13 @@ func TestLatestReleaseUsesRedirectNotAPI(t *testing.T) {
 			return
 		}
 		switch r.URL.Path {
-		case "/o1x3/nx/releases/latest":
+		case "/o1x3/akme/releases/latest":
 			if r.Method != http.MethodHead {
 				t.Errorf("method = %s, want HEAD", r.Method)
 			}
 			sawHead = true
-			http.Redirect(w, r, "/o1x3/nx/releases/tag/v9.9.9", http.StatusFound)
-		case "/o1x3/nx/releases/tag/v9.9.9":
+			http.Redirect(w, r, "/o1x3/akme/releases/tag/v9.9.9", http.StatusFound)
+		case "/o1x3/akme/releases/tag/v9.9.9":
 			w.WriteHeader(http.StatusOK)
 		default:
 			http.NotFound(w, r)
@@ -141,7 +141,7 @@ func TestLatestReleaseUsesRedirectNotAPI(t *testing.T) {
 	}))
 	t.Cleanup(srv.Close)
 
-	tag, err := resolveLatestTag(t.Context(), srv.Client(), srv.URL+"/o1x3/nx/releases/latest")
+	tag, err := resolveLatestTag(t.Context(), srv.Client(), srv.URL+"/o1x3/akme/releases/latest")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -161,7 +161,7 @@ func resolveLatestTag(ctx context.Context, client *http.Client, latestURL string
 	if err != nil {
 		return "", err
 	}
-	req.Header.Set("User-Agent", "nx")
+	req.Header.Set("User-Agent", "akme")
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", err
@@ -199,7 +199,7 @@ func writeTestArchive(t *testing.T, payload []byte) string {
 	gzw := gzip.NewWriter(file)
 	tw := tar.NewWriter(gzw)
 	hdr := &tar.Header{
-		Name: "nx",
+		Name: "akme",
 		Mode: 0o755,
 		Size: int64(len(payload)),
 	}

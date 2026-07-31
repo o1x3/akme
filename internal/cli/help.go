@@ -7,7 +7,7 @@ import (
 )
 
 // runHelp prints nested help for a command path.
-// Examples: nx help · nx help git · nx help git stat · nx help token harness
+// Examples: akme help · akme help git · akme help git stat · akme help token harness
 func (a App) runHelp(args []string, stdout io.Writer) error {
 	text, err := helpFor(args)
 	if err != nil {
@@ -80,67 +80,67 @@ func tokenHelpFor(args []string) (string, error) {
 }
 
 func helpText() string {
-	return `nx is a personal development CLI.
+	return `akme is a personal development CLI.
 
 Usage:
-  nx <command> [args]
-  nx help [command...]
+  akme <command> [args]
+  akme help [command...]
 
 Commands:
   git       Git repository helpers
   token     Token stats across AI coding harnesses
-  update    Update nx to the latest release
+  update    Update akme to the latest release
   version   Show build version
   help      Show help (nest for details)
 
 Nest help to learn more:
-  nx help git
-  nx help token
-  nx help update
-  nx help version
+  akme help git
+  akme help token
+  akme help update
+  akme help version
 
 `
 }
 
 func updateHelpText() string {
 	return `Usage:
-  nx update
+  akme update
 
-Check GitHub releases for a newer nx build and replace this binary in place
-when one is available. Released builds also check on every other nx invocation.
+Check GitHub releases for a newer akme build and replace this binary in place
+when one is available. Released builds also check on every other akme invocation.
 
 Notes:
   - Resolves the latest tag via github.com/.../releases/latest (not the API)
   - Needs a writable install directory (default ~/.local/bin)
   - Development builds (version "dev") cannot self-update
-  - Set NX_NO_UPDATE=1 to disable background checks (nx update still works)
+  - Set AKME_NO_UPDATE=1 to disable background checks (akme update still works)
 
 Examples:
-  nx update
-  NX_NO_UPDATE=1 nx version
+  akme update
+  AKME_NO_UPDATE=1 akme version
 
 `
 }
 
 func helpCommandHelpText() string {
 	return `Usage:
-  nx help [command...]
+  akme help [command...]
 
 Show help for a command path. Keep nesting to see deeper detail.
 
 Examples:
-  nx help
-  nx help git
-  nx help git stat
-  nx help token
-  nx help token harness
+  akme help
+  akme help git
+  akme help git stat
+  akme help token
+  akme help token harness
 
 `
 }
 
 func versionHelpText() string {
 	return `Usage:
-  nx version
+  akme version
 
 Show the build version, commit, and build date.
 
@@ -152,21 +152,21 @@ Aliases:
 
 func gitHelpText() string {
 	return `Usage:
-  nx git <subcommand> [args]
-  nx help git [subcommand]
+  akme git <subcommand> [args]
+  akme help git [subcommand]
 
 Subcommands:
   stat   Show branch diff stats against the repo default branch
 
 Nest help:
-  nx help git stat
+  akme help git stat
 
 `
 }
 
 func gitStatHelpText() string {
 	return `Usage:
-  nx git stat [--jobs <n>] <folder> [folder...]
+  akme git stat [--jobs <n>] <folder> [folder...]
 
 Show changed files, added lines, and removed lines for each folder's
 branch against the remote default branch (<base>...HEAD).
@@ -183,15 +183,15 @@ Notes:
   - Falls back to origin/main if default branch detection is unavailable
 
 Examples:
-  nx git stat .
-  nx git stat --jobs 4 repo-a repo-b
+  akme git stat .
+  akme git stat --jobs 4 repo-a repo-b
 
 `
 }
 
 func tokenHelpTopicsText() string {
 	return `Usage:
-  nx help token [topic]
+  akme help token [topic]
 
 Topics:
   harness   Claude / Codex / pi / Cursor sources
@@ -199,13 +199,13 @@ Topics:
   view      overview, models, hours, punchcard, ...
   output    json / quiet / compare modes
   flags     -i / --help
-  env       NX_* / CLAUDE_CONFIG_DIR / CODEX_HOME / PI_AGENT_DIR / CURSOR_SESSION_TOKEN
+  env       AKME_* / CLAUDE_CONFIG_DIR / CODEX_HOME / PI_AGENT_DIR / CURSOR_SESSION_TOKEN
   exit      process exit codes
   examples  common invocations
 
 Or show everything:
-  nx help token
-  nx token --help
+  akme help token
+  akme token --help
 
 `
 }
@@ -215,7 +215,7 @@ func tokenTopicHelpText(topic string) string {
 	case "help", "-h", "--help", "topics":
 		return tokenHelpTopicsText()
 	case "harness", "harnesses", "source", "sources":
-		return `nx token — harnesses
+		return `akme token — harnesses
 
 HARNESS   (default: all)
   claude            Claude Code        ~/.claude + ~/.config/claude
@@ -239,21 +239,21 @@ Cursor prefers the dashboard usage API (billed input/output/cache) when a
 local session JWT is available; otherwise bubble tokenCount, else the
 composer context meter once per chat, else ~4 bytes/token. Cursor Auto
 resolves to the underlying local model (AgentKv / usageData) when available.
-Set NX_TOKEN_CURSOR_LOCAL=1 to force local-only Cursor totals.
+Set AKME_TOKEN_CURSOR_LOCAL=1 to force local-only Cursor totals.
 
 Cursor sessions/heatmap are machine-local (state.vscdb does not sync across
 machines or accounts). Billed token totals follow the logged-in Cursor
 account via the dashboard API (personal teamId=0 plus discovered team
 memberships). Empty dashboard responses no longer wipe local estimates.
 <config> is ~/Library/Application Support on macOS, ~/.config on Linux, and
-%APPDATA% on Windows. nx token cursor json includes cursor_status;
+%APPDATA% on Windows. akme token cursor json includes cursor_status;
 empty/estimated/zero-token Cursor output prints a stderr hint.
 
-More: nx help token
+More: akme help token
 
 `
 	case "range", "ranges", "time":
-		return `nx token — ranges
+		return `akme token — ranges
 
 RANGE     (default: alltime)
   alltime           lifetime
@@ -265,11 +265,11 @@ Aliases:
   30d:     month, 30
   7d:      week, 7
 
-More: nx help token
+More: akme help token
 
 `
 	case "view", "views", "tab", "tabs":
-		return `nx token — views
+		return `akme token — views
 
 TAB       (default: overview)
   overview          headline stats + activity heatmap
@@ -282,11 +282,11 @@ TAB       (default: overview)
   cost              estimated spend + cache savings (spend)
   mix               input / output / cache token composition (split)
 
-More: nx help token
+More: akme help token
 
 `
 	case "output", "outputs", "mode", "modes":
-		return `nx token — output modes
+		return `akme token — output modes
 
 OUTPUT MODES   (bypass the card)
   json              machine-readable summary (--stats); NDJSON for "all"
@@ -295,11 +295,11 @@ OUTPUT MODES   (bypass the card)
 
 These modes exit 3 when the selection has no usage, so they compose in scripts.
 
-More: nx help token
+More: akme help token
 
 `
 	case "flag", "flags", "options":
-		return `nx token — flags
+		return `akme token — flags
 
 FLAGS
   -i, --tui         interactive mode (←/→ harness · tab · 1/2/3 range · q quit)
@@ -307,52 +307,52 @@ FLAGS
 
 Interactive aliases: --interactive, -t, tui
 
-More: nx help token
+More: akme help token
 
 `
 	case "env", "environment":
-		return `nx token — environment
+		return `akme token — environment
 
 ENV
-  NX_BACKGROUND           light|dark — override terminal background detection
-  NX_TRUECOLOR            set to force 24-bit colour
-  NX_TOKEN_NO_CACHE       set to bypass the on-disk aggregate cache
-  NX_TOKEN_CURSOR_LOCAL   set to skip Cursor dashboard enrichment (local only)
-  NX_CURSOR_SESSION_TOKEN override Cursor dashboard session (JWT or sub::jwt)
-  CURSOR_SESSION_TOKEN    same as NX_CURSOR_SESSION_TOKEN
+  AKME_BACKGROUND           light|dark — override terminal background detection
+  AKME_TRUECOLOR            set to force 24-bit colour
+  AKME_TOKEN_NO_CACHE       set to bypass the on-disk aggregate cache
+  AKME_TOKEN_CURSOR_LOCAL   set to skip Cursor dashboard enrichment (local only)
+  AKME_CURSOR_SESSION_TOKEN override Cursor dashboard session (JWT or sub::jwt)
+  CURSOR_SESSION_TOKEN    same as AKME_CURSOR_SESSION_TOKEN
   CLAUDE_CONFIG_DIR       comma-separated Claude config roots (…/projects)
   CODEX_HOME              comma-separated Codex homes
   PI_AGENT_DIR            comma-separated pi-agent session dirs
 
 Cursor activity (sessions/heatmap) is machine-local; billed tokens follow the
 logged-in account (including team memberships). Empty dashboard replies keep
-local estimates. Check cursor_status in nx token cursor json or the stderr
+local estimates. Check cursor_status in akme token cursor json or the stderr
 hint when Cursor is empty/estimated/zero-token.
 
 Piped output is plain text. NO_COLOR / CLICOLOR are respected.
 
-More: nx help token
+More: akme help token
 
 `
 	case "exit", "exits", "codes", "status":
-		return `nx token — exit codes
+		return `akme token — exit codes
 
 EXIT
   0 ok
   2 bad args
   3 no usage for the selection (output modes only)
 
-More: nx help token
+More: akme help token
 
 `
 	case "example", "examples":
-		return `nx token — examples
+		return `akme token — examples
 
 EXAMPLES
-  nx token               nx token codex 7d cost      nx token claude punchcard
-  nx token all json      nx token 30d compare        nx token pi trend -i
+  akme token               akme token codex 7d cost      akme token claude punchcard
+  akme token all json      akme token 30d compare        akme token pi trend -i
 
-More: nx help token
+More: akme help token
 
 `
 	default:

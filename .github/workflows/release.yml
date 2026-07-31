@@ -15,14 +15,19 @@ jobs:
     if: ${{ github.ref_type == 'branch' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7.0.0
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-go@v6.5.0
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version-file: go.mod
           cache: true
+
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
 
       - name: Validate version
         id: version
@@ -52,3 +57,19 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Publishes npm package `akme` at the same VERSION. The package downloads
+      # the GitHub release binary on install / first run, so goreleaser must
+      # finish first. Requires repo secret NPM_TOKEN (npm Automation token).
+      - name: Publish akme to npm
+        working-directory: npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
+            echo "::warning::NPM_TOKEN secret is not set; skipped npm publish for akme@${{ steps.version.outputs.version }}"
+            exit 0
+          fi
+          version="${{ steps.version.outputs.version }}"
+          npm version "$version" --no-git-tag-version --allow-same-version
+          npm publish --access public

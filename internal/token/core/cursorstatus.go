@@ -61,11 +61,11 @@ func (st CursorStatus) hint() string {
 	case !st.IDEFound && st.CLIStores == 0:
 		return "no Cursor state.vscdb or CLI stores found (activity is machine-local and does not sync across machines/accounts)"
 	case st.LocalOnly:
-		return "NX_TOKEN_CURSOR_LOCAL set; skipping Cursor dashboard (local estimates only)"
+		return "AKME_TOKEN_CURSOR_LOCAL set; skipping Cursor dashboard (local estimates only)"
 	case !st.AuthOK:
-		return "not logged in to Cursor (or session expired); billed tokens need a dashboard session — sign in or set NX_CURSOR_SESSION_TOKEN"
+		return "not logged in to Cursor (or session expired); billed tokens need a dashboard session — sign in or set AKME_CURSOR_SESSION_TOKEN"
 	case !st.DashboardOK:
-		return "Cursor dashboard returned no billed usage; keeping local estimates (sessions stay machine-local — confirm the same Cursor account, or try NX_TOKEN_CURSOR_LOCAL=1)"
+		return "Cursor dashboard returned no billed usage; keeping local estimates (sessions stay machine-local — confirm the same Cursor account, or try AKME_TOKEN_CURSOR_LOCAL=1)"
 	default:
 		return ""
 	}
@@ -88,7 +88,7 @@ func CursorHintFor(s Summary) string {
 		if st.Hint != "" {
 			return st.Hint
 		}
-		return "Cursor activity found but 0 billed tokens — confirm the same logged-in account on this machine, or set NX_TOKEN_CURSOR_LOCAL=1 for local estimates"
+		return "Cursor activity found but 0 billed tokens — confirm the same logged-in account on this machine, or set AKME_TOKEN_CURSOR_LOCAL=1 for local estimates"
 	}
 	if !s.HasData() || s.TokensEstimated {
 		return st.Hint

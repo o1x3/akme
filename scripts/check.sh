@@ -34,4 +34,14 @@ run sh -n scripts/validate-version.sh
 run scripts/validate-version.sh
 run sh -n .githooks/pre-commit
 
+if command -v node >/dev/null 2>&1; then
+  run node --check npm/bin/akme.js
+  run node --check npm/lib/binary.js
+  run node --check npm/lib/platform.js
+  run node --check npm/scripts/postinstall.js
+  run node --test npm/lib/*.test.js
+else
+  say "==> skip npm package checks (node not installed)"
+fi
+
 exit "$fail"

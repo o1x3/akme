@@ -1,15 +1,15 @@
 version: 2
 
-project_name: nx
+project_name: akme
 
 before:
   hooks:
     - go mod tidy
 
 builds:
-  - id: nx
-    main: ./cmd/nx
-    binary: nx
+  - id: akme
+    main: ./cmd/akme
+    binary: akme
     env:
       - CGO_ENABLED=0
     goos:
@@ -22,9 +22,9 @@ builds:
       - -s -w -X main.version={{ .Version }} -X main.commit={{ .Commit }} -X main.date={{ .Date }}
 
 archives:
-  - id: nx
+  - id: akme
     ids:
-      - nx
+      - akme
     formats:
       - tar.gz
     name_template: >-
@@ -38,4 +38,4 @@ checksum:
 release:
   github:
     owner: o1x3
-    name: nx
+    name: akme

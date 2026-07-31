@@ -20,10 +20,10 @@ func (s cursorSession) cookieValue() string {
 }
 
 // resolveCursorSession finds a Cursor dashboard session.
-// Priority: NX_CURSOR_SESSION_TOKEN / CURSOR_SESSION_TOKEN env → state.vscdb
+// Priority: AKME_CURSOR_SESSION_TOKEN / NX_CURSOR_SESSION_TOKEN / CURSOR_SESSION_TOKEN env → state.vscdb
 // ItemTable cursorAuth/accessToken.
 func resolveCursorSession() (cursorSession, bool) {
-	for _, key := range []string{"NX_CURSOR_SESSION_TOKEN", "CURSOR_SESSION_TOKEN"} {
+	for _, key := range []string{"AKME_CURSOR_SESSION_TOKEN", "NX_CURSOR_SESSION_TOKEN", "CURSOR_SESSION_TOKEN"} {
 		if v := strings.TrimSpace(os.Getenv(key)); v != "" {
 			if s, ok := parseCursorSessionOverride(v); ok {
 				return s, true
