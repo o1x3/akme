@@ -29,11 +29,14 @@ function repo() {
 }
 
 function binaryPath(version = packageVersion()) {
-  const override = process.env.AKME_NX_BINARY || process.env.NX_BINARY;
+  const override =
+    process.env.AKME_BINARY ||
+    process.env.AKME_NX_BINARY ||
+    process.env.NX_BINARY;
   if (override) {
     return path.resolve(override);
   }
-  return path.join(packageRoot(), "vendor", version, "nx");
+  return path.join(packageRoot(), "vendor", version, "akme");
 }
 
 function releaseBase(version) {
@@ -50,7 +53,6 @@ function download(url, dest) {
         headers: { "User-Agent": "akme-npm" },
       },
       (res) => {
-        // Follow a single GitHub release redirect hop.
         if (
           res.statusCode >= 300 &&
           res.statusCode < 400 &&
@@ -97,11 +99,14 @@ function expectedChecksum(checksumsText, archiveName) {
 }
 
 async function ensureBinary() {
-  const override = process.env.AKME_NX_BINARY || process.env.NX_BINARY;
+  const override =
+    process.env.AKME_BINARY ||
+    process.env.AKME_NX_BINARY ||
+    process.env.NX_BINARY;
   if (override) {
     const resolved = path.resolve(override);
     if (!fs.existsSync(resolved)) {
-      throw new Error(`akme: AKME_NX_BINARY not found: ${resolved}`);
+      throw new Error(`akme: AKME_BINARY not found: ${resolved}`);
     }
     return resolved;
   }
@@ -136,13 +141,13 @@ async function ensureBinary() {
       );
     }
 
-    execFileSync("tar", ["-xzf", archivePath, "-C", tmp, "nx"], {
+    execFileSync("tar", ["-xzf", archivePath, "-C", tmp, "akme"], {
       stdio: ["ignore", "ignore", "pipe"],
     });
 
-    const extracted = path.join(tmp, "nx");
+    const extracted = path.join(tmp, "akme");
     if (!fs.existsSync(extracted)) {
-      throw new Error("akme: archive did not contain nx binary");
+      throw new Error("akme: archive did not contain akme binary");
     }
 
     fs.mkdirSync(path.dirname(dest), { recursive: true });

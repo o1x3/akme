@@ -1,8 +1,8 @@
 "use strict";
 
 /**
- * Map Node's process.platform / process.arch to nx GitHub release asset names.
- * Release archives are: nx_<os>_<arch>.tar.gz (darwin|linux × amd64|arm64).
+ * Map Node's process.platform / process.arch to akme GitHub release asset names.
+ * Release archives are: akme_<os>_<arch>.tar.gz (darwin|linux × amd64|arm64).
  */
 function resolvePlatform(platform = process.platform, arch = process.arch) {
   let os;
@@ -34,7 +34,7 @@ function resolvePlatform(platform = process.platform, arch = process.arch) {
       );
   }
 
-  const archiveName = `nx_${os}_${goarch}.tar.gz`;
+  const archiveName = `akme_${os}_${goarch}.tar.gz`;
   return { os, arch: goarch, archiveName };
 }
 

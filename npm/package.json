@@ -1,7 +1,7 @@
 {
   "name": "akme",
-  "version": "0.4.6",
-  "description": "akme — personal developer CLI (nx) distributed for npx / npm / bun",
+  "version": "0.5.0",
+  "description": "akme — personal developer CLI (git stats, AI token dashboard, self-update)",
   "license": "MIT",
   "bin": {
     "akme": "bin/akme.js"
@@ -30,10 +30,10 @@
   },
   "keywords": [
     "cli",
-    "nx",
     "akme",
     "developer-tools",
     "token",
-    "git"
+    "git",
+    "npx"
   ]
 }

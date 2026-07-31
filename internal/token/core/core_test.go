@@ -18,7 +18,7 @@ func TestFriendlyModel(t *testing.T) {
 		"gpt-5.2":                   "GPT-5.2",
 		"anthropic/claude-opus-4-8": "Opus 4.8",
 		"claude-4.5-sonnet":         "Sonnet 4.5", // Cursor-style reversed id
-		// Legacy Anthropic ids put the version first too; nx renders them as
+		// Legacy Anthropic ids put the version first too; akme renders them as
 		// "Sonnet 3.5"-style names (an intentional improvement over tmax).
 		"claude-3-5-sonnet-20241022": "Sonnet 3.5",
 		"claude-3-opus-20240229":     "Opus 3",

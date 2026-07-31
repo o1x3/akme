@@ -24,7 +24,7 @@ func main() {
 		Date:    date,
 	}
 
-	// Explicit `nx update` does its own check; skip the background one so the
+	// Explicit `akme update` does its own check; skip the background one so the
 	// two paths do not race to replace the binary.
 	updateDone := make(chan struct{})
 	if !isUpdateCommand(os.Args[1:]) {

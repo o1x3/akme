@@ -101,7 +101,7 @@ case "$1" in
 		exit 0
 		;;
 	diff)
-		sync_dir=$NX_TEST_SYNC_DIR
+		sync_dir=$AKME_TEST_SYNC_DIR
 		name=$(basename "$PWD")
 		: > "$sync_dir/$name.started"
 		i=0
@@ -129,7 +129,7 @@ exit 1
 
 	oldPath := os.Getenv("PATH")
 	t.Setenv("PATH", bin+string(os.PathListSeparator)+oldPath)
-	t.Setenv("NX_TEST_SYNC_DIR", root)
+	t.Setenv("AKME_TEST_SYNC_DIR", root)
 
 	folders := []string{
 		filepath.Join(root, "repo-a"),

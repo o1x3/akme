@@ -1,7 +1,7 @@
 package cli
 
 // ExitError carries a specific process exit code alongside an optional error.
-// cmd/nx extracts the code with errors.As; a nil Err means "exit silently with
+// cmd/akme extracts the code with errors.As; a nil Err means "exit silently with
 // this code" (nothing extra is printed to stderr).
 type ExitError struct {
 	Code int

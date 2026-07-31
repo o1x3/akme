@@ -255,7 +255,7 @@ func TestRunTokenQuietNoUsage(t *testing.T) {
 	if exitErr.Error() != "" {
 		t.Fatalf("expected silent ExitError, got %q", exitErr.Error())
 	}
-	if got := stdout.String(); got != "nx token: no usage for this selection\n" {
+	if got := stdout.String(); got != "akme token: no usage for this selection\n" {
 		t.Fatalf("stdout = %q", got)
 	}
 }

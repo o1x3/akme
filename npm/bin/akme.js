@@ -6,10 +6,10 @@ const { ensureBinary } = require("../lib/binary");
 
 async function main() {
   const binary = await ensureBinary();
-  // npm/bun is the update channel for this install path; skip nx self-update.
+  // npm/bun is the update channel for this install path; skip binary self-update.
   const env = { ...process.env };
-  if (env.NX_NO_UPDATE === undefined) {
-    env.NX_NO_UPDATE = "1";
+  if (env.AKME_NO_UPDATE === undefined && env.NX_NO_UPDATE === undefined) {
+    env.AKME_NO_UPDATE = "1";
   }
 
   const result = spawnSync(binary, process.argv.slice(2), {

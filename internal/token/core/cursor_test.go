@@ -14,7 +14,7 @@ import (
 // hermetic even if a real Cursor session token is present in the environment.
 func forceCursorLocal(t *testing.T) {
 	t.Helper()
-	t.Setenv("NX_TOKEN_CURSOR_LOCAL", "1")
+	t.Setenv("AKME_TOKEN_CURSOR_LOCAL", "1")
 }
 
 // makeSQLiteDB creates a fixture database at path (creating parent dirs) and

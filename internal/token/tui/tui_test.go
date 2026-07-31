@@ -145,7 +145,7 @@ func TestTUIHarnessCycleReachesNewHarnesses(t *testing.T) {
 	}
 }
 
-// An NX_BACKGROUND override must survive interactive mode: no background
+// An AKME_BACKGROUND override must survive interactive mode: no background
 // query at startup, and terminal answers that do arrive are ignored.
 func TestTUIDarkLocked(t *testing.T) {
 	m := fixedModel()

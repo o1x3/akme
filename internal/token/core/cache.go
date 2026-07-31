@@ -9,30 +9,26 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
+
+	"github.com/o1x3/nx/internal/envx"
 )
 
 func tokenCacheDir() string {
-	if d := os.Getenv("NX_CACHE_DIR"); d != "" {
+	if d := envx.First("AKME_CACHE_DIR", "NX_CACHE_DIR"); d != "" {
 		return filepath.Join(d, "token")
 	}
 	if d := os.Getenv("XDG_CACHE_HOME"); d != "" {
-		return filepath.Join(d, "nx", "token")
+		return filepath.Join(d, "akme", "token")
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(home, ".cache", "nx", "token")
+	return filepath.Join(home, ".cache", "akme", "token")
 }
 
 func cacheDisabled() bool {
-	switch strings.ToLower(os.Getenv("NX_TOKEN_NO_CACHE")) {
-	case "1", "true", "yes":
-		return true
-	default:
-		return false
-	}
+	return envx.Truthy("AKME_TOKEN_NO_CACHE", "NX_TOKEN_NO_CACHE")
 }
 
 // statFingerprint hashes sorted path/size/mtime tuples. SQLite sidecars
@@ -62,7 +58,7 @@ func writeStat(w io.Writer, path string) {
 }
 
 // aggregateCacheVersion is prefixed onto fingerprints so parser semantic
-// changes (dedup, meters, discovery) invalidate stale ~/.cache/nx/token gobes.
+// changes (dedup, meters, discovery) invalidate stale ~/.cache/akme/token gobes.
 const aggregateCacheVersion = "4"
 
 func loadCached(harness string, paths []string, load func() *Aggregate) *Aggregate {

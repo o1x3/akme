@@ -1,5 +1,5 @@
 // Package core loads usage data from the Claude Code, Codex, pi.dev and
-// Cursor coding harnesses and aggregates it into the stats nx renders.
+// Cursor coding harnesses and aggregates it into the stats akme renders.
 package core
 
 import (

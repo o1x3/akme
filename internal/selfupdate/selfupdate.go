@@ -15,6 +15,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/o1x3/nx/internal/envx"
 )
 
 const (
@@ -52,7 +54,7 @@ type asset struct {
 // prints a short stderr note. Uses github.com/.../releases/latest (not the
 // GitHub API).
 func Check(ctx context.Context, opts Options) {
-	if os.Getenv("NX_NO_UPDATE") == "1" || opts.CurrentVersion == "" || opts.CurrentVersion == "dev" {
+	if envx.Truthy("AKME_NO_UPDATE", "NX_NO_UPDATE") || opts.CurrentVersion == "" || opts.CurrentVersion == "dev" {
 		return
 	}
 	opts = withDefaults(opts)
@@ -67,7 +69,7 @@ func Check(ctx context.Context, opts Options) {
 	cancel()
 
 	// Discovery is time-boxed tightly; downloading a newer binary gets the
-	// longer budget used by `nx update`.
+	// longer budget used by `akme update`.
 	updateCtx, updateCancel := context.WithTimeout(ctx, updateTimeout)
 	defer updateCancel()
 	_, _ = applyRelease(updateCtx, opts, rel, false)
@@ -130,7 +132,7 @@ func applyRelease(ctx context.Context, opts Options, rel release, explicit bool)
 
 	if !newer(rel.TagName, opts.CurrentVersion) {
 		if explicit {
-			fmt.Fprintf(opts.Stdout, "nx is up to date (%s)\n", strings.TrimPrefix(opts.CurrentVersion, "v"))
+			fmt.Fprintf(opts.Stdout, "akme is up to date (%s)\n", strings.TrimPrefix(opts.CurrentVersion, "v"))
 		}
 		return result, nil
 	}
@@ -144,7 +146,7 @@ func applyRelease(ctx context.Context, opts Options, rel release, explicit bool)
 		return result, errors.New("release has no checksums.txt asset")
 	}
 
-	archivePath, err := downloadFile(ctx, asset.URL, os.TempDir(), ".nx-archive-*")
+	archivePath, err := downloadFile(ctx, asset.URL, os.TempDir(), ".akme-archive-*")
 	if err != nil {
 		return result, err
 	}
@@ -172,7 +174,7 @@ func applyRelease(ctx context.Context, opts Options, rel release, explicit bool)
 	}
 
 	result.Updated = true
-	msg := fmt.Sprintf("nx: updated %s -> %s\n", opts.CurrentVersion, rel.TagName)
+	msg := fmt.Sprintf("akme: updated %s -> %s\n", opts.CurrentVersion, rel.TagName)
 	if explicit {
 		fmt.Fprint(opts.Stdout, msg)
 	} else {
@@ -182,7 +184,7 @@ func applyRelease(ctx context.Context, opts Options, rel release, explicit bool)
 }
 
 func canWriteDir(dir string) bool {
-	f, err := os.CreateTemp(dir, ".nx-write-*")
+	f, err := os.CreateTemp(dir, ".akme-write-*")
 	if err != nil {
 		return false
 	}
@@ -201,7 +203,7 @@ func latestRelease(ctx context.Context, repo string) (release, error) {
 	if err != nil {
 		return release{}, err
 	}
-	req.Header.Set("User-Agent", "nx")
+	req.Header.Set("User-Agent", "akme")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -224,7 +226,7 @@ func latestRelease(ctx context.Context, repo string) (release, error) {
 
 	osPart := strings.ToLower(runtime.GOOS)
 	archPart := strings.ToLower(runtime.GOARCH)
-	archiveName := "nx_" + osPart + "_" + archPart + ".tar.gz"
+	archiveName := "akme_" + osPart + "_" + archPart + ".tar.gz"
 	base := "https://github.com/" + repo + "/releases/download/" + tag
 	return release{
 		TagName: tag,
@@ -278,7 +280,7 @@ func downloadFile(ctx context.Context, url, targetDir, pattern string) (string, 
 	if err != nil {
 		return "", err
 	}
-	req.Header.Set("User-Agent", "nx")
+	req.Header.Set("User-Agent", "akme")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -310,7 +312,7 @@ func verifyChecksum(ctx context.Context, checksumURL, archiveName, archivePath s
 	if err != nil {
 		return err
 	}
-	req.Header.Set("User-Agent", "nx")
+	req.Header.Set("User-Agent", "akme")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -383,15 +385,15 @@ func extractBinary(archivePath, targetDir string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		if header.Typeflag != tar.TypeReg || filepath.Base(header.Name) != "nx" {
+		if header.Typeflag != tar.TypeReg || filepath.Base(header.Name) != "akme" {
 			continue
 		}
 
-		tmp, err := os.CreateTemp(targetDir, ".nx-update-*")
+		tmp, err := os.CreateTemp(targetDir, ".akme-update-*")
 		if err != nil {
 			// Same-directory temp is preferred for atomic rename; fall back so
 			// callers can still surface a clear replace error if needed.
-			tmp, err = os.CreateTemp("", ".nx-update-*")
+			tmp, err = os.CreateTemp("", ".akme-update-*")
 			if err != nil {
 				return "", err
 			}
@@ -405,7 +407,7 @@ func extractBinary(archivePath, targetDir string) (string, error) {
 		return tmp.Name(), nil
 	}
 
-	return "", errors.New("archive did not contain nx binary")
+	return "", errors.New("archive did not contain akme binary")
 }
 
 func newer(latest, current string) bool {

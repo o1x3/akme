@@ -34,11 +34,11 @@ func TestNewer(t *testing.T) {
 
 func TestChecksumForArchive(t *testing.T) {
 	checksums := `
-abc123  nx_darwin_arm64.tar.gz
-def456 *nx_linux_amd64.tar.gz
+abc123  akme_darwin_arm64.tar.gz
+def456 *akme_linux_amd64.tar.gz
 `
 
-	got, ok := checksumForArchive(checksums, "nx_linux_amd64.tar.gz")
+	got, ok := checksumForArchive(checksums, "akme_linux_amd64.tar.gz")
 	if !ok {
 		t.Fatal("checksum not found")
 	}
@@ -66,7 +66,7 @@ func TestCanWriteDir(t *testing.T) {
 }
 
 func TestExtractBinaryFallsBackOutsideTargetDir(t *testing.T) {
-	archivePath := writeTestArchive(t, []byte("fake-nx-binary"))
+	archivePath := writeTestArchive(t, []byte("fake-akme-binary"))
 	readonly := t.TempDir()
 	if err := os.Chmod(readonly, 0o555); err != nil {
 		t.Fatal(err)
@@ -88,7 +88,7 @@ func TestExtractBinaryFallsBackOutsideTargetDir(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if string(raw) != "fake-nx-binary" {
+	if string(raw) != "fake-akme-binary" {
 		t.Fatalf("extracted content = %q", raw)
 	}
 }
@@ -161,7 +161,7 @@ func resolveLatestTag(ctx context.Context, client *http.Client, latestURL string
 	if err != nil {
 		return "", err
 	}
-	req.Header.Set("User-Agent", "nx")
+	req.Header.Set("User-Agent", "akme")
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", err
@@ -199,7 +199,7 @@ func writeTestArchive(t *testing.T, payload []byte) string {
 	gzw := gzip.NewWriter(file)
 	tw := tar.NewWriter(gzw)
 	hdr := &tar.Header{
-		Name: "nx",
+		Name: "akme",
 		Mode: 0o755,
 		Size: int64(len(payload)),
 	}

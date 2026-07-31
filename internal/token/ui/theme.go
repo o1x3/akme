@@ -1,4 +1,4 @@
-// Package ui renders the nx token dashboard with lipgloss. It paints no background
+// Package ui renders the akme token dashboard with lipgloss. It paints no background
 // and draws no border — everything is foreground colour on the terminal's own
 // background (neofetch/fastfetch style), with colours that adapt to a light or
 // dark terminal.

@@ -1,16 +1,19 @@
 #!/usr/bin/env sh
 set -eu
 
-repo="${NX_REPO:-o1x3/nx}"
+repo="${AKME_REPO:-${NX_REPO:-o1x3/nx}}"
 # Prefer a user-writable bindir so runtime self-update can replace the binary.
 # /usr/local/bin is often root-owned and breaks in-place updates.
-if [ -n "${NX_INSTALL_DIR:-}" ]; then
+if [ -n "${AKME_INSTALL_DIR:-}" ]; then
+  install_dir="$AKME_INSTALL_DIR"
+elif [ -n "${NX_INSTALL_DIR:-}" ]; then
   install_dir="$NX_INSTALL_DIR"
 else
   install_dir="${HOME}/.local/bin"
 fi
-binary="${install_dir}/nx"
-path_marker="# managed by nx installer"
+binary="${install_dir}/akme"
+path_marker="# managed by akme installer"
+legacy_path_marker="# managed by nx installer"
 
 os="$(uname -s | tr '[:upper:]' '[:lower:]')"
 arch="$(uname -m)"
@@ -48,12 +51,12 @@ case "$release_url" in
     version="${release_url##*/}"
     ;;
   *)
-    echo "could not determine latest nx release from: $release_url" >&2
+    echo "could not determine latest akme release from: $release_url" >&2
     exit 1
     ;;
 esac
 
-archive_name="nx_${os}_${arch}.tar.gz"
+archive_name="akme_${os}_${arch}.tar.gz"
 release_base="https://github.com/${repo}/releases/download/${version}"
 
 asset_url="${release_base}/${archive_name}"
@@ -94,37 +97,41 @@ if [ "$actual" != "$expected" ]; then
   exit 1
 fi
 
-tar -xzf "$tmp/$archive_name" -C "$tmp" nx
-chmod 0755 "$tmp/nx"
+tar -xzf "$tmp/$archive_name" -C "$tmp" akme
+chmod 0755 "$tmp/akme"
 
 if ! mkdir -p "$install_dir" 2>/dev/null; then
   echo "cannot create install directory: $install_dir" >&2
-  echo "set NX_INSTALL_DIR to a writable path (default: \$HOME/.local/bin)" >&2
+  echo "set AKME_INSTALL_DIR to a writable path (default: \$HOME/.local/bin)" >&2
   exit 1
 fi
 
 # Refuse root-owned / non-writable bindirs: self-update needs to write beside the binary.
-probe="$install_dir/.nx-install-write-$$"
+probe="$install_dir/.akme-install-write-$$"
 if ! ( : >"$probe" ) 2>/dev/null; then
   echo "install directory is not writable: $install_dir" >&2
-  echo "nx self-update requires a user-writable bindir; try:" >&2
-  echo "  curl -fsSL https://raw.githubusercontent.com/${repo}/main/scripts/install.sh | NX_INSTALL_DIR=\"\$HOME/.local/bin\" sh" >&2
+  echo "akme self-update requires a user-writable bindir; try:" >&2
+  echo "  curl -fsSL https://raw.githubusercontent.com/${repo}/main/scripts/install.sh | AKME_INSTALL_DIR=\"\$HOME/.local/bin\" sh" >&2
   exit 1
 fi
 rm -f "$probe"
 
-if ! install -m 0755 "$tmp/nx" "$binary" 2>/dev/null; then
+if ! install -m 0755 "$tmp/akme" "$binary" 2>/dev/null; then
   # BusyBox / minimal environments may lack install(1).
-  if ! cp "$tmp/nx" "$binary"; then
-    echo "failed to install nx to $binary" >&2
+  if ! cp "$tmp/akme" "$binary"; then
+    echo "failed to install akme to $binary" >&2
     exit 1
   fi
   chmod 0755 "$binary"
 fi
 
-echo "installed nx to $binary"
+echo "installed akme to $binary"
 
-# Capture any pre-existing nx before we rewrite PATH for this process.
+# Capture any pre-existing nx/akme before we rewrite PATH for this process.
+previous_akme=""
+if command -v akme >/dev/null 2>&1; then
+  previous_akme="$(command -v akme)"
+fi
 previous_nx=""
 if command -v nx >/dev/null 2>&1; then
   previous_nx="$(command -v nx)"
@@ -134,7 +141,17 @@ ensure_path_in_profile() {
   profile="$1"
   bindir="$2"
 
-  if [ -f "$profile" ] && grep -Fq "$path_marker" "$profile" 2>/dev/null; then
+  if [ -f "$profile" ] && {
+    grep -Fq "$path_marker" "$profile" 2>/dev/null ||
+      grep -Fq "$legacy_path_marker" "$profile" 2>/dev/null
+  }; then
+    # Refresh legacy nx installer marker to the akme marker when present.
+    if grep -Fq "$legacy_path_marker" "$profile" 2>/dev/null; then
+      tmp_profile="$(mktemp)"
+      sed "s/${legacy_path_marker}/${path_marker}/g" "$profile" >"$tmp_profile"
+      mv "$tmp_profile" "$profile"
+      echo "renamed nx installer PATH marker to akme in ${profile}"
+    fi
     return 0
   fi
 
@@ -179,8 +196,16 @@ ensure_install_dir_on_path() {
     fish)
       fish_config="${HOME}/.config/fish/config.fish"
       mkdir -p "$(dirname "$fish_config")"
-      if [ -f "$fish_config" ] && grep -Fq "$path_marker" "$fish_config" 2>/dev/null; then
-        :
+      if [ -f "$fish_config" ] && {
+        grep -Fq "$path_marker" "$fish_config" 2>/dev/null ||
+          grep -Fq "$legacy_path_marker" "$fish_config" 2>/dev/null
+      }; then
+        if grep -Fq "$legacy_path_marker" "$fish_config" 2>/dev/null; then
+          tmp_profile="$(mktemp)"
+          sed "s/${legacy_path_marker}/${path_marker}/g" "$fish_config" >"$tmp_profile"
+          mv "$tmp_profile" "$fish_config"
+          echo "renamed nx installer PATH marker to akme in ${fish_config}"
+        fi
       else
         {
           printf '\n%s\n' "$path_marker"
@@ -195,8 +220,9 @@ ensure_install_dir_on_path() {
   esac
 }
 
-remove_stale_nx() {
+remove_stale_binary() {
   candidate="$1"
+  label="$2"
   case "$candidate" in
     /*) ;;
     *) return 0 ;;
@@ -222,23 +248,30 @@ remove_stale_nx() {
   fi
 
   if rm -f "$candidate" 2>/dev/null; then
-    echo "removed previous install at $candidate"
+    echo "removed previous ${label} install at $candidate"
     return 0
   fi
   if command -v sudo >/dev/null 2>&1 && sudo rm -f "$candidate"; then
-    echo "removed previous install at $candidate"
+    echo "removed previous ${label} install at $candidate"
     return 0
   fi
-  echo "warning: could not remove previous install at $candidate; it may shadow ${binary} on PATH" >&2
+  echo "warning: could not remove previous ${label} install at $candidate; it may shadow ${binary} on PATH" >&2
 }
 
 migrate_previous_installs() {
   # Former default location from earlier installers.
-  remove_stale_nx "/usr/local/bin/nx"
+  remove_stale_binary "/usr/local/bin/akme" "akme"
+  remove_stale_binary "/usr/local/bin/nx" "nx"
 
-  # Binary that resolved as `nx` before this install rewrote PATH.
+  # Same bindir legacy nx binary (common ~/.local/bin/nx → ~/.local/bin/akme).
+  remove_stale_binary "${install_dir}/nx" "nx"
+
+  # Binary that resolved as `akme` / `nx` before this install rewrote PATH.
+  if [ -n "$previous_akme" ]; then
+    remove_stale_binary "$previous_akme" "akme"
+  fi
   if [ -n "$previous_nx" ]; then
-    remove_stale_nx "$previous_nx"
+    remove_stale_binary "$previous_nx" "nx"
   fi
 
   # Refresh the shell's command hash table so `command -v` reflects removals.
@@ -249,14 +282,18 @@ ensure_install_dir_on_path "$install_dir"
 migrate_previous_installs
 
 hash -r 2>/dev/null || true
-resolved="$(command -v nx 2>/dev/null || true)"
+resolved="$(command -v akme 2>/dev/null || true)"
 if [ -n "$resolved" ]; then
   if [ "$resolved" = "$binary" ]; then
-    echo "nx is on PATH as $resolved"
+    echo "akme is on PATH as $resolved"
   else
-    echo "warning: \`nx\` currently resolves to $resolved, not $binary" >&2
+    echo "warning: \`akme\` currently resolves to $resolved, not $binary" >&2
     echo "open a new shell, or put ${install_dir} earlier on PATH" >&2
   fi
 else
-  echo "note: open a new shell so ${install_dir} is on PATH, then run: nx version" >&2
+  echo "note: open a new shell so ${install_dir} is on PATH, then run: akme version" >&2
+fi
+
+if command -v nx >/dev/null 2>&1; then
+  echo "warning: legacy \`nx\` still resolves to $(command -v nx); remove it or open a new shell" >&2
 fi

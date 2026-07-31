@@ -26,8 +26,8 @@ func TestStatFingerprintChangesOnEdit(t *testing.T) {
 
 func TestLoadCachedHitMiss(t *testing.T) {
 	cacheDir := t.TempDir()
-	t.Setenv("NX_CACHE_DIR", cacheDir)
-	t.Setenv("NX_TOKEN_NO_CACHE", "")
+	t.Setenv("AKME_CACHE_DIR", cacheDir)
+	t.Setenv("AKME_TOKEN_NO_CACHE", "")
 
 	var calls int
 	load := func() *Aggregate {
@@ -54,8 +54,8 @@ func TestLoadCachedHitMiss(t *testing.T) {
 
 func TestLoadCachedDisabled(t *testing.T) {
 	cacheDir := t.TempDir()
-	t.Setenv("NX_CACHE_DIR", cacheDir)
-	t.Setenv("NX_TOKEN_NO_CACHE", "1")
+	t.Setenv("AKME_CACHE_DIR", cacheDir)
+	t.Setenv("AKME_TOKEN_NO_CACHE", "1")
 
 	var calls int
 	load := func() *Aggregate {
@@ -65,7 +65,7 @@ func TestLoadCachedDisabled(t *testing.T) {
 	loadCached(Codex, nil, load)
 	loadCached(Codex, nil, load)
 	if calls != 2 {
-		t.Fatalf("NX_TOKEN_NO_CACHE: calls=%d, want 2", calls)
+		t.Fatalf("AKME_TOKEN_NO_CACHE: calls=%d, want 2", calls)
 	}
 }
 
@@ -73,7 +73,7 @@ func TestLoadAllParallel(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	forceCursorLocal(t)
-	t.Setenv("NX_TOKEN_NO_CACHE", "1")
+	t.Setenv("AKME_TOKEN_NO_CACHE", "1")
 
 	day := time.Date(2026, 6, 20, 10, 0, 0, 0, time.Local).Format(time.RFC3339)
 	claudeDir := filepath.Join(home, ".claude", "projects", "p1")

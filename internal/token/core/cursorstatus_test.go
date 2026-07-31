@@ -28,8 +28,8 @@ func TestProbeCursorStatusNoSources(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	t.Setenv("APPDATA", filepath.Join(home, "AppData", "Roaming"))
-	t.Setenv("NX_TOKEN_CURSOR_LOCAL", "1")
-	os.Unsetenv("NX_CURSOR_SESSION_TOKEN")
+	t.Setenv("AKME_TOKEN_CURSOR_LOCAL", "1")
+	os.Unsetenv("AKME_CURSOR_SESSION_TOKEN")
 	os.Unsetenv("CURSOR_SESSION_TOKEN")
 	setCursorDashApplied(false)
 
@@ -61,7 +61,7 @@ func TestProbeCursorStatusFindsIDE(t *testing.T) {
 	if st.AuthOK {
 		t.Error("AuthOK = true, want false (no access token)")
 	}
-	if !strings.Contains(st.Hint, "not logged in") && !strings.Contains(st.Hint, "NX_TOKEN_CURSOR_LOCAL") {
+	if !strings.Contains(st.Hint, "not logged in") && !strings.Contains(st.Hint, "AKME_TOKEN_CURSOR_LOCAL") {
 		t.Errorf("hint = %q", st.Hint)
 	}
 }
