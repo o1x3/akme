@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.1
+
+- Rewrote the npm package README (`npm/README.md`) with matching badges and shorter install-focused copy for the npmjs.com page.
+
 ## 0.5.0
 
 - Renamed the CLI from `nx` to **`akme`** (binary, help, installer, release archives `akme_<os>_<arch>.tar.gz`, cache under `~/.cache/akme`).
