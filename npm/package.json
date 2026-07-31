@@ -1,7 +1,7 @@
 {
   "name": "@o1x3/akme",
   "version": "0.5.0",
-  "description": "akme — personal developer CLI (git stats, AI token dashboard, self-update)",
+  "description": "akme: personal developer CLI (git stats, coding-agent token dashboard, self-update)",
   "license": "MIT",
   "bin": {
     "akme": "bin/akme.js"
