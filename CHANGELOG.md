@@ -3,6 +3,7 @@
 ## 0.5.0
 
 - Renamed the CLI from `nx` to **`akme`** (binary, help, installer, release archives `akme_<os>_<arch>.tar.gz`, cache under `~/.cache/akme`).
+- GitHub repo / Go module moved to [`o1x3/akme`](https://github.com/o1x3/akme).
 - Env vars are now `AKME_*` (`AKME_NO_UPDATE`, `AKME_BACKGROUND`, `AKME_TRUECOLOR`, `AKME_TOKEN_*`, `AKME_CURSOR_SESSION_TOKEN`, `AKME_CACHE_DIR`, `AKME_INSTALL_DIR`); legacy `NX_*` names still work as fallbacks.
 - Installer installs `~/.local/bin/akme` and migrates old `nx` installs (removes `~/.local/bin/nx`, `/usr/local/bin/nx`, and whatever `command -v nx` resolved to; refreshes PATH markers).
 - npm package `akme` downloads the renamed release assets; README rewritten with npm/GitHub badges.
