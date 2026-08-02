@@ -3,22 +3,17 @@ name: release
 on:
   push:
     branches: [main]
-    paths:
-      - VERSION
+  pull_request:
   workflow_dispatch:
 
 permissions:
-  contents: write
-  id-token: write # npm Trusted Publishing (OIDC)
+  contents: read
 
 jobs:
-  release-version:
-    if: ${{ github.ref_type == 'branch' }}
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1
-        with:
-          fetch-depth: 0
 
       - uses: actions/setup-go@v7.0.0
         with:
@@ -28,12 +23,62 @@ jobs:
       - uses: actions/setup-node@v7.0.0
         with:
           node-version: "22"
+
+      - name: Check
+        run: scripts/check.sh
+
+  # After tests on main: release only when VERSION changed (or manual dispatch).
+  release:
+    needs: test
+    if: >
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write # npm Trusted Publishing (OIDC)
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Confirm VERSION changed
+        id: gate
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          before="${{ github.event.before }}"
+          if [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ]; then
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if git diff --name-only "$before" "${{ github.sha }}" | grep -qx VERSION; then
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            echo "VERSION unchanged — skipping release"
+          fi
+
+      - if: steps.gate.outputs.release == 'true'
+        uses: actions/setup-go@v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - if: steps.gate.outputs.release == 'true'
+        uses: actions/setup-node@v7.0.0
+        with:
+          node-version: "22"
           registry-url: "https://registry.npmjs.org"
 
-      - name: Ensure npm CLI supports Trusted Publishing
+      - if: steps.gate.outputs.release == 'true'
+        name: Ensure npm CLI supports Trusted Publishing
         run: npm install -g npm@latest
 
-      - name: Validate version
+      - if: steps.gate.outputs.release == 'true'
+        name: Validate version
         id: version
         run: |
           scripts/validate-version.sh
@@ -41,7 +86,8 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=v$version" >> "$GITHUB_OUTPUT"
 
-      - name: Create release tag
+      - if: steps.gate.outputs.release == 'true'
+        name: Create release tag
         run: |
           tag="${{ steps.version.outputs.tag }}"
 
@@ -55,7 +101,8 @@ jobs:
           git tag -a "$tag" -m "Release $tag"
           git push origin "$tag"
 
-      - uses: goreleaser/goreleaser-action@v7.2.3
+      - if: steps.gate.outputs.release == 'true'
+        uses: goreleaser/goreleaser-action@v7.2.3
         with:
           version: "~> v2"
           args: release --clean
@@ -64,10 +111,11 @@ jobs:
 
       # Publishes akme-cli via Trusted Publishing (OIDC). Native binaries ship
       # on the GitHub release; postinstall / bare `npx akme-cli` download them.
-      # Trusted publisher: akme-cli ← o1x3/akme / release.yml / npm publish.
+      # Trusted publisher MUST use workflow filename release.yml (this file).
       # Do NOT set NODE_AUTH_TOKEN — an empty/_authToken line from setup-node
       # short-circuits OIDC (publish-release.js strips it).
-      - name: Publish akme-cli to npm
+      - if: steps.gate.outputs.release == 'true'
+        name: Publish akme-cli to npm
         run: |
           node npm/scripts/publish-release.js \
             --version "${{ steps.version.outputs.version }}"

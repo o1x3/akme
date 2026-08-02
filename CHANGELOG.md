@@ -4,6 +4,7 @@
 
 - Bare `npx akme-cli`: show ASCII greeting first, then install/update the native CLI (never run Go usage/help).
 - Expose `bin.akme-cli` alongside `bin.akme` so `npx akme-cli` resolves the wrapper explicitly.
+- Single Actions workflow (`release.yml`): test job then release job (only when `VERSION` changes on `main`).
 
 ## 0.6.1
 

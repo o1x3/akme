@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/o1x3/akme/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/o1x3/akme/ci.yml?branch=main&style=for-the-badge&logo=githubactions&logoColor=white&label=CI" alt="CI"></a>
+  <a href="https://github.com/o1x3/akme/actions/workflows/release.yml"><img src="https://img.shields.io/github/actions/workflow/status/o1x3/akme/release.yml?branch=main&style=for-the-badge&logo=githubactions&logoColor=white&label=CI" alt="CI"></a>
   <a href="https://go.dev/"><img src="https://img.shields.io/badge/Go-1.25-00ADD8?style=for-the-badge&logo=go&logoColor=white" alt="Go 1.25"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="MIT License"></a>
   <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey?style=for-the-badge" alt="macOS and Linux">
@@ -173,7 +173,7 @@ Pre-commit runs `scripts/format.sh`, then `scripts/check.sh`.
 
 Releases are driven by `VERSION`. GoReleaser publishes GitHub assets, then the same tag goes to npm as [`akme-cli`](https://www.npmjs.com/package/akme-cli). The npm package downloads the matching release binary on install / bare `npx akme-cli`.
 
-Bump `VERSION`, sync `npm/package.json`, add a `CHANGELOG.md` section, push to `main`. Actions tags `v<VERSION>`, ships macOS/Linux `amd64`/`arm64` archives (`akme_<os>_<arch>.tar.gz`), and publishes `akme-cli` via Trusted Publishing (OIDC, no `NPM_TOKEN`). Trusted publisher: GitHub `o1x3` / `akme` / workflow `release.yml`.
+Bump `VERSION`, sync `npm/package.json`, add a `CHANGELOG.md` section, push to `main`. One Actions workflow (`release.yml`) runs tests, then on `VERSION` bumps tags `v<VERSION>`, ships macOS/Linux archives, and publishes `akme-cli` via Trusted Publishing (OIDC, no `NPM_TOKEN`). Trusted publisher: GitHub `o1x3` / `akme` / workflow **`release.yml`**.
 
 ```sh
 printf '0.6.1\n' > VERSION

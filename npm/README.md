@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/o1x3/akme/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/o1x3/akme/ci.yml?branch=main&style=for-the-badge&logo=githubactions&logoColor=white&label=CI" alt="CI"></a>
+  <a href="https://github.com/o1x3/akme/actions/workflows/release.yml"><img src="https://img.shields.io/github/actions/workflow/status/o1x3/akme/release.yml?branch=main&style=for-the-badge&logo=githubactions&logoColor=white&label=CI" alt="CI"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="MIT License"></a>
   <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey?style=for-the-badge" alt="macOS and Linux">
 </p>
