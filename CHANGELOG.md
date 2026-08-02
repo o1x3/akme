@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.3
+
+- Replace garbled bg-fill ANSI dump with a clean pink `akme` block wordmark.
+
 ## 0.6.2
 
 - Bare `npx akme-cli`: show ASCII greeting first, then install/update the native CLI (never run Go usage/help).

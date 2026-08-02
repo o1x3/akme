@@ -1,15 +1,17 @@
 "use strict";
 
-// ANSI wordmark (ESC restored from terminal dump). Printed on install only.
+// Clean foreground-only wordmark (no bg fills — those dump poorly in most terms).
 const ESC = "\u001b";
+const PINK = `${ESC}[91m`;
+const DIM = `${ESC}[2m`;
+const RESET = `${ESC}[0m`;
 
 const LINES = [
-  `${ESC}[0;37;40m             ${ESC}[0;97;40m██ ${ESC}[0;91;40m██ ${ESC}[0;37;40m     ${ESC}[0;91;40m▄▄ ${ESC}[0;37;40m                             ${ESC}[0m`,
-  `${ESC}[0;37;40m  ${ESC}[0;91;40m▄▄██▀▀▀███▀████ ${ESC}[0;37;40m   ${ESC}[0;91;40m▄█▀ ${ESC}[0;37;40m    ${ESC}[0;97;40m██ ${ESC}[0;91;40m██▀▀██▀███▄▄ ${ESC}[0;37;40m   ${ESC}[0;91;40m▄▄██▀▀████ ${ESC}[0m`,
-  `${ESC}[0;91;40m▐ ${ESC}[0;97;40m██ ${ESC}[0;91;41m▓ ${ESC}[0;37;40m    ${ESC}[0;31;40m▐ ${ESC}[0;91;41m▓▓▓ ${ESC}[0;37;40m  ${ESC}[0;31;40m▐ ${ESC}[0;91;41m▓▓▓ ${ESC}[0;91;40m▀▀███▄▄ ${ESC}[0;37;40m  ${ESC}[0;91;41m▓▓▓▓ ${ESC}[0;37;40m   ${ESC}[0;91;41m▓▓ ${ESC}[0;37;40m   ${ESC}[0;91;41m▓▓▓▓ ${ESC}[0;91;40m▌▐ ${ESC}[0;97;40m██ ${ESC}[0;91;41m▓ ${ESC}[0;91;40m▄▄▄ ${ESC}[0;91;41m▓▓▓▓ ${ESC}[0m`,
-  `${ESC}[0;91;41m▒▒▒▒ ${ESC}[0;37;40m    ${ESC}[0;31;40m▐ ${ESC}[0;91;41m▒▒▒ ${ESC}[0;31;40m▌▐ ${ESC}[0;91;41m▒▒▒ ${ESC}[0;37;40m    ${ESC}[0;91;41m▓▓▓▓ ${ESC}[0;91;40m▌ ${ESC}[0;31;40m▐ ${ESC}[0;91;41m▒▒▒ ${ESC}[0;37;40m   ${ESC}[0;91;41m▒▒ ${ESC}[0;37;40m   ${ESC}[0;91;41m▒▒▒▒▒▒▒▒▒ ${ESC}[0;37;40m    ${ESC}[0;31;40m▄▄▄▄ ${ESC}[0m`,
-  `${ESC}[0;91;41m░░░░ ${ESC}[0;31;40m▌ ${ESC}[0;37;40m   ${ESC}[0;31;40m▐ ${ESC}[0;91;41m░░░ ${ESC}[0;31;40m▌▐ ${ESC}[0;91;41m░░░ ${ESC}[0;37;40m    ${ESC}[0;91;41m▒▒▒▒▒ ${ESC}[0;31;40m▐ ${ESC}[0;91;41m░░░ ${ESC}[0;37;40m   ${ESC}[0;91;41m░░ ${ESC}[0;37;40m   ${ESC}[0;91;41m░░░░░░░░░ ${ESC}[0;37;40m    ${ESC}[0;91;41m░░░░ ${ESC}[0m`,
-  `${ESC}[0;37;40m  ${ESC}[0;31;40m▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀ ${ESC}[0;37;40m    ${ESC}[0;91;41m░░░░░ ${ESC}[0;31;40m▀▀▀▀ ${ESC}[0;37;40m       ${ESC}[0;31;40m████▌ ${ESC}[0;37;40m  ${ESC}[0;31;40m▀▀▀▀▀▀████ ${ESC}[0m`,
+  "  ████   ██  ██  ███▄   █████",
+  " ██  ██  ██ ██   ██ ██  ██   ",
+  " ██████  ████    ██  ██ ████ ",
+  " ██  ██  ██ ██   ██ ██  ██   ",
+  " ██  ██  ██  ██  ███▀   █████",
 ];
 
 function shouldPrintGreeting(env = process.env) {
@@ -22,13 +24,14 @@ function shouldPrintGreeting(env = process.env) {
 }
 
 function greetingText() {
-  return `${LINES.join("\n")}\n`;
+  return `${LINES.map((line) => `${PINK}${line}${RESET}`).join("\n")}\n`;
 }
 
 function printGreeting(stream = process.stderr, env = process.env) {
   if (!shouldPrintGreeting(env)) return false;
+  stream.write("\n");
   stream.write(greetingText());
-  stream.write("\n  akme ready — try: akme help\n\n");
+  stream.write(`\n  ${DIM}akme ready — try: akme help${RESET}\n\n`);
   return true;
 }
 

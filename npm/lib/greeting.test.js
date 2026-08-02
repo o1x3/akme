@@ -11,8 +11,8 @@ const {
 describe("greeting", () => {
   it("embeds ANSI escapes and block characters", () => {
     const text = greetingText();
-    assert.match(text, /\u001b\[0;91;40m/);
-    assert.match(text, /██/);
+    assert.match(text, /\u001b\[91m/);
+    assert.match(text, /████/);
     assert.match(text, /\u001b\[0m/);
   });
 
@@ -28,6 +28,6 @@ describe("greeting", () => {
     const stream = { write(chunk) { out += chunk; } };
     assert.equal(printGreeting(stream, {}), true);
     assert.match(out, /akme ready/);
-    assert.match(out, /██/);
+    assert.match(out, /████/);
   });
 });
