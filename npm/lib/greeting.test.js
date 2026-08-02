@@ -11,8 +11,9 @@ const {
 describe("greeting", () => {
   it("embeds ANSI escapes and block characters", () => {
     const text = greetingText();
-    assert.match(text, /\u001b\[91m/);
-    assert.match(text, /████/);
+    assert.match(text, /\u001b\[38;2;255;85;85m/);
+    assert.match(text, /\u001b\[48;2;170;0;0m/);
+    assert.match(text, /██/);
     assert.match(text, /\u001b\[0m/);
   });
 

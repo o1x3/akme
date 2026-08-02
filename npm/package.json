@@ -1,6 +1,6 @@
 {
   "name": "akme-cli",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "description": "Personal developer CLI: git branch stats, coding-agent token usage, self-update",
   "license": "MIT",
   "bin": {

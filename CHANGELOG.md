@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.4
+
+- Restore the pink/white/dark-red akme ANSI wordmark from the HTML art (truecolor, no bogus spaces).
+
 ## 0.6.3
 
 - Replace garbled bg-fill ANSI dump with a clean pink `akme` block wordmark.
