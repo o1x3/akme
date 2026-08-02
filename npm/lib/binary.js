@@ -28,7 +28,15 @@ function repo() {
   return process.env.AKME_REPO || process.env.NX_REPO || DEFAULT_REPO;
 }
 
-function binaryPath(version = packageVersion()) {
+function vendorRoot() {
+  return path.join(packageRoot(), "vendor");
+}
+
+function versionFilePath() {
+  return path.join(vendorRoot(), "VERSION");
+}
+
+function binaryPath(version) {
   const override =
     process.env.AKME_BINARY ||
     process.env.AKME_NX_BINARY ||
@@ -36,12 +44,46 @@ function binaryPath(version = packageVersion()) {
   if (override) {
     return path.resolve(override);
   }
-  return path.join(packageRoot(), "vendor", version, "akme");
+  return path.join(vendorRoot(), version, "akme");
 }
 
 function releaseBase(version) {
   const tag = version.startsWith("v") ? version : `v${version}`;
   return `https://github.com/${repo()}/releases/download/${tag}`;
+}
+
+function stripV(tag) {
+  return String(tag || "").replace(/^v/i, "");
+}
+
+function parseSemver(version) {
+  const parts = stripV(version).split(".").map((p) => Number.parseInt(p, 10));
+  if (parts.length !== 3 || parts.some((n) => Number.isNaN(n))) {
+    return null;
+  }
+  return parts;
+}
+
+/** True when latest is strictly newer than current (semver). */
+function newer(latest, current) {
+  const a = parseSemver(latest);
+  const b = parseSemver(current);
+  if (!a || !b) return stripV(latest) !== stripV(current);
+  for (let i = 0; i < 3; i++) {
+    if (a[i] > b[i]) return true;
+    if (a[i] < b[i]) return false;
+  }
+  return false;
+}
+
+function installedVersion() {
+  try {
+    const v = fs.readFileSync(versionFilePath(), "utf8").trim();
+    if (v) return stripV(v);
+  } catch {
+    // fall through
+  }
+  return "";
 }
 
 function download(url, dest) {
@@ -77,6 +119,65 @@ function download(url, dest) {
   });
 }
 
+function requestHead(url) {
+  return new Promise((resolve, reject) => {
+    const client = url.startsWith("https:") ? https : http;
+    const req = client.request(
+      url,
+      {
+        method: "HEAD",
+        headers: { "User-Agent": "akme-npm" },
+      },
+      (res) => {
+        // Follow redirects manually so we can read the final URL.
+        if (
+          res.statusCode >= 300 &&
+          res.statusCode < 400 &&
+          res.headers.location
+        ) {
+          res.resume();
+          const next = new URL(res.headers.location, url).toString();
+          requestHead(next).then(resolve, reject);
+          return;
+        }
+        resolve({ statusCode: res.statusCode, url: url, headers: res.headers });
+        res.resume();
+      },
+    );
+    req.on("error", reject);
+    req.end();
+  });
+}
+
+function tagFromReleaseURL(raw) {
+  const marker = "/releases/tag/";
+  const idx = raw.indexOf(marker);
+  if (idx < 0) {
+    throw new Error(`akme: could not determine latest release from ${raw}`);
+  }
+  let tag = raw.slice(idx + marker.length);
+  const cut = tag.search(/[/?#]/);
+  if (cut >= 0) tag = tag.slice(0, cut);
+  tag = tag.trim();
+  if (!tag) {
+    throw new Error(`akme: could not determine latest release from ${raw}`);
+  }
+  return tag;
+}
+
+/**
+ * Resolve newest GitHub release tag via releases/latest redirect (not the API).
+ */
+async function latestReleaseTag() {
+  const latestURL = `https://github.com/${repo()}/releases/latest`;
+  const res = await requestHead(latestURL);
+  if (res.statusCode < 200 || res.statusCode >= 400) {
+    throw new Error(`akme: GitHub returned ${res.statusCode} for ${latestURL}`);
+  }
+  // requestHead follows redirects; final url is in res.url
+  return tagFromReleaseURL(res.url);
+}
+
 function sha256File(filePath) {
   const hash = crypto.createHash("sha256");
   hash.update(fs.readFileSync(filePath));
@@ -96,21 +197,6 @@ function expectedChecksum(checksumsText, archiveName) {
     }
   }
   return "";
-}
-
-/**
- * Prefer the platform optionalDependency (npm CDN). Falls back to null when
- * optional deps were omitted (--omit=optional) or scripts-only installs.
- */
-function resolveOptionalBinary() {
-  const { npmPackage, binarySubpath } = resolvePlatform();
-  try {
-    return require.resolve(`${npmPackage}/${binarySubpath}`, {
-      paths: [packageRoot()],
-    });
-  } catch {
-    return null;
-  }
 }
 
 async function downloadFromGitHub(version, dest) {
@@ -156,6 +242,15 @@ async function downloadFromGitHub(version, dest) {
   }
 }
 
+function writeInstalledVersion(version) {
+  fs.mkdirSync(vendorRoot(), { recursive: true });
+  fs.writeFileSync(versionFilePath(), `${stripV(version)}\n`);
+}
+
+/**
+ * Ensure a runnable binary exists (for `npx akme-cli <cmd>`).
+ * Uses AKME_BINARY, else vendor copy, else downloads the npm package version.
+ */
 async function ensureBinary() {
   const override =
     process.env.AKME_BINARY ||
@@ -169,28 +264,82 @@ async function ensureBinary() {
     return resolved;
   }
 
-  const optional = resolveOptionalBinary();
-  if (optional && fs.existsSync(optional) && fs.statSync(optional).size > 0) {
-    return optional;
+  const current = installedVersion();
+  if (current) {
+    const dest = binaryPath(current);
+    if (fs.existsSync(dest) && fs.statSync(dest).size > 0) {
+      return dest;
+    }
   }
 
   const version = packageVersion();
   const dest = binaryPath(version);
   if (fs.existsSync(dest) && fs.statSync(dest).size > 0) {
+    writeInstalledVersion(version);
     return dest;
   }
 
-  // Fallback when optionalDependencies were skipped (npm --omit=optional, etc.).
-  return downloadFromGitHub(version, dest);
+  await downloadFromGitHub(version, dest);
+  writeInstalledVersion(version);
+  return dest;
+}
+
+/**
+ * Install or update to the latest GitHub release (bare `npx akme-cli` /
+ * postinstall). Returns { binary, version, updated }.
+ */
+async function installOrUpdate() {
+  const override =
+    process.env.AKME_BINARY ||
+    process.env.AKME_NX_BINARY ||
+    process.env.NX_BINARY;
+  if (override) {
+    const resolved = path.resolve(override);
+    if (!fs.existsSync(resolved)) {
+      throw new Error(`akme: AKME_BINARY not found: ${resolved}`);
+    }
+    return { binary: resolved, version: installedVersion() || packageVersion(), updated: false };
+  }
+
+  const latestTag = await latestReleaseTag();
+  const latest = stripV(latestTag);
+  const current = installedVersion();
+  const dest = binaryPath(latest);
+
+  if (
+    current &&
+    !newer(latest, current) &&
+    fs.existsSync(dest) &&
+    fs.statSync(dest).size > 0
+  ) {
+    return { binary: dest, version: current, updated: false };
+  }
+
+  // Same version already on disk (e.g. reinstall).
+  if (fs.existsSync(dest) && fs.statSync(dest).size > 0 && current === latest) {
+    return { binary: dest, version: latest, updated: false };
+  }
+
+  await downloadFromGitHub(latest, dest);
+  writeInstalledVersion(latest);
+  return {
+    binary: dest,
+    version: latest,
+    updated: Boolean(current) && newer(latest, current),
+  };
 }
 
 module.exports = {
   binaryPath,
   ensureBinary,
   expectedChecksum,
+  installOrUpdate,
+  installedVersion,
+  latestReleaseTag,
+  newer,
   packageVersion,
   releaseBase,
   repo,
-  resolveOptionalBinary,
   resolvePlatform,
+  stripV,
 };

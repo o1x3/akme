@@ -1,10 +1,16 @@
 # Changelog
 
+## 0.6.1
+
+- Single npm package **`akme-cli`** only (dropped `@o1x3/akme-*` platform optionalDependencies). Install downloads the native binary from the GitHub release.
+- Bare `npx akme-cli` / `npm install -g akme-cli` install or **update** the CLI to the latest GitHub release (checksum-verified), then show the install greeting.
+- Release workflow publishes only `akme-cli` via Trusted Publishing.
+
 ## 0.6.0
 
-- Faster `npx @o1x3/akme` / `npm install -g @o1x3/akme`: ship the native binary in platform packages (`@o1x3/akme-darwin-arm64`, `-darwin-x64`, `-linux-arm64`, `-linux-x64`) via `optionalDependencies` (esbuild/Sentry pattern), so installs pull from the npm CDN instead of downloading GitHub release assets after install.
-- Keep GitHub release download as a fallback when optional deps are omitted (`--omit=optional`).
-- Release workflow publishes the four platform packages, then `@o1x3/akme`. Configure Trusted Publishing on each platform package (same `release.yml` workflow).
+- npm meta package is **`akme-cli`** (unscoped; `@o1x3/akme` / bare `akme` blocked by name similarity).
+- Faster install experiment via platform `optionalDependencies` (superseded in 0.6.1 by GitHub-only install).
+- Bare `npx` / `npm install -g` share install path with ASCII greeting.
 
 ## 0.5.1
 

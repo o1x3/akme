@@ -1,8 +1,8 @@
 # akme
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/@o1x3/akme"><img src="https://img.shields.io/npm/v/@o1x3/akme?style=for-the-badge&logo=npm&logoColor=white&color=CB3837" alt="npm version"></a>
-  <a href="https://www.npmjs.com/package/@o1x3/akme"><img src="https://img.shields.io/npm/dm/@o1x3/akme?style=for-the-badge&logo=npm&logoColor=white&color=CB3837" alt="npm downloads"></a>
+  <a href="https://www.npmjs.com/package/akme-cli"><img src="https://img.shields.io/npm/v/akme-cli?style=for-the-badge&logo=npm&logoColor=white&color=CB3837" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/akme-cli"><img src="https://img.shields.io/npm/dm/akme-cli?style=for-the-badge&logo=npm&logoColor=white&color=CB3837" alt="npm downloads"></a>
   <a href="https://github.com/o1x3/akme/releases/latest"><img src="https://img.shields.io/github/v/release/o1x3/akme?style=for-the-badge&logo=github&logoColor=white&color=181717" alt="GitHub release"></a>
 </p>
 
@@ -19,15 +19,22 @@
 
 ## Install
 
-npm / npx / bun:
+npm (installs the CLI; does not run a command):
 
 ```sh
-npx @o1x3/akme token -i
-npm install -g @o1x3/akme
-bunx @o1x3/akme help
+npm install -g akme-cli
+# same: install or update CLI to latest GitHub release + greeting
+npx akme-cli
 ```
 
-`npx` / `npm install` pull the matching native binary from an npm platform package (`optionalDependencies`), so first run does not wait on a GitHub release download.
+Then:
+
+```sh
+akme help
+akme token -i
+```
+
+Bare `npx akme-cli` / `npm install -g` download (or update) the native binary from GitHub releases. Pass args to run the CLI (`npx akme-cli token`). Set `AKME_NPM_QUIET=1` to skip the greeting.
 
 curl (installs to `~/.local/bin/akme`):
 
@@ -164,13 +171,13 @@ Pre-commit runs `scripts/format.sh`, then `scripts/check.sh`.
 
 ## Release
 
-Releases are driven by `VERSION`. GoReleaser publishes GitHub assets, then the same tag goes to npm as [`@o1x3/akme`](https://www.npmjs.com/package/@o1x3/akme) plus platform packages (`@o1x3/akme-darwin-arm64`, `-darwin-x64`, `-linux-arm64`, `-linux-x64`) that embed the native binaries.
+Releases are driven by `VERSION`. GoReleaser publishes GitHub assets, then the same tag goes to npm as [`akme-cli`](https://www.npmjs.com/package/akme-cli). The npm package downloads the matching release binary on install / bare `npx akme-cli`.
 
-Bump `VERSION`, sync `npm/package.json` (and its `optionalDependencies`), add a `CHANGELOG.md` section, push to `main`. Actions tags `v<VERSION>`, ships macOS/Linux `amd64`/`arm64` archives (`akme_<os>_<arch>.tar.gz`), and runs `npm/scripts/publish-release.js` via Trusted Publishing (OIDC, no `NPM_TOKEN`). Trusted publisher on each package: GitHub `o1x3` / `akme` / workflow `release.yml`.
+Bump `VERSION`, sync `npm/package.json`, add a `CHANGELOG.md` section, push to `main`. Actions tags `v<VERSION>`, ships macOS/Linux `amd64`/`arm64` archives (`akme_<os>_<arch>.tar.gz`), and publishes `akme-cli` via Trusted Publishing (OIDC, no `NPM_TOKEN`). Trusted publisher: GitHub `o1x3` / `akme` / workflow `release.yml`.
 
 ```sh
 printf '0.6.1\n' > VERSION
-# sync npm/package.json version + optionalDependencies
+# sync npm/package.json version
 # add ## 0.6.1 to CHANGELOG.md
 git commit -am "release: v0.6.1"
 git push origin main

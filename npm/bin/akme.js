@@ -3,8 +3,17 @@
 
 const { spawnSync } = require("node:child_process");
 const { ensureBinary } = require("../lib/binary");
+const { installCLI } = require("../lib/install");
 
 async function main() {
+  const args = process.argv.slice(2);
+
+  // Bare `npx akme-cli` / `akme` with no args → same as npm install postinstall.
+  if (args.length === 0) {
+    await installCLI();
+    return;
+  }
+
   const binary = await ensureBinary();
   // npm/bun is the update channel for this install path; skip binary self-update.
   const env = { ...process.env };
@@ -12,7 +21,7 @@ async function main() {
     env.AKME_NO_UPDATE = "1";
   }
 
-  const result = spawnSync(binary, process.argv.slice(2), {
+  const result = spawnSync(binary, args, {
     stdio: "inherit",
     env,
   });

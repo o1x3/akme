@@ -62,17 +62,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Publishes platform packages (@o1x3/akme-<os>-<arch>) then the meta
-      # package @o1x3/akme via Trusted Publishing (OIDC). Binaries ship inside
-      # the platform packages (esbuild/Sentry pattern) so npx installs from the
-      # npm CDN instead of downloading GitHub release assets at runtime.
-      # Configure trusted publishers (same workflow) on each package:
-      #   @o1x3/akme, @o1x3/akme-darwin-arm64, @o1x3/akme-darwin-x64,
-      #   @o1x3/akme-linux-arm64, @o1x3/akme-linux-x64
+      # Publishes akme-cli via Trusted Publishing (OIDC). Native binaries ship
+      # on the GitHub release; postinstall / bare `npx akme-cli` download them.
+      # Trusted publisher: akme-cli ← o1x3/akme / release.yml / npm publish.
       # Do NOT set NODE_AUTH_TOKEN — an empty/_authToken line from setup-node
       # short-circuits OIDC (publish-release.js strips it).
-      - name: Publish @o1x3/akme (+ platform packages) to npm
+      - name: Publish akme-cli to npm
         run: |
           node npm/scripts/publish-release.js \
-            --version "${{ steps.version.outputs.version }}" \
-            --dist dist
+            --version "${{ steps.version.outputs.version }}"

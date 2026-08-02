@@ -1,39 +1,14 @@
 "use strict";
 
 /**
- * Map Node's process.platform / process.arch to akme release + npm package ids.
- * GitHub archives: akme_<os>_<goarch>.tar.gz (darwin|linux × amd64|arm64).
- * npm platform packages: @o1x3/akme-<nodeOs>-<nodeArch> (x64|arm64).
+ * Map Node's process.platform / process.arch to GitHub release archives:
+ * akme_<os>_<goarch>.tar.gz (darwin|linux × amd64|arm64).
  */
 const PLATFORMS = [
-  {
-    nodeOs: "darwin",
-    nodeArch: "arm64",
-    goos: "darwin",
-    goarch: "arm64",
-    npmPackage: "@o1x3/akme-darwin-arm64",
-  },
-  {
-    nodeOs: "darwin",
-    nodeArch: "x64",
-    goos: "darwin",
-    goarch: "amd64",
-    npmPackage: "@o1x3/akme-darwin-x64",
-  },
-  {
-    nodeOs: "linux",
-    nodeArch: "arm64",
-    goos: "linux",
-    goarch: "arm64",
-    npmPackage: "@o1x3/akme-linux-arm64",
-  },
-  {
-    nodeOs: "linux",
-    nodeArch: "x64",
-    goos: "linux",
-    goarch: "amd64",
-    npmPackage: "@o1x3/akme-linux-x64",
-  },
+  { nodeOs: "darwin", nodeArch: "arm64", goos: "darwin", goarch: "arm64" },
+  { nodeOs: "darwin", nodeArch: "x64", goos: "darwin", goarch: "amd64" },
+  { nodeOs: "linux", nodeArch: "arm64", goos: "linux", goarch: "arm64" },
+  { nodeOs: "linux", nodeArch: "x64", goos: "linux", goarch: "amd64" },
 ];
 
 function normalizeArch(arch) {
@@ -62,9 +37,7 @@ function resolvePlatform(platform = process.platform, arch = process.arch) {
     arch: match.goarch,
     nodeOs: match.nodeOs,
     nodeArch: match.nodeArch,
-    npmPackage: match.npmPackage,
     archiveName: `akme_${match.goos}_${match.goarch}.tar.gz`,
-    binarySubpath: "bin/akme",
   };
 }
 
@@ -72,7 +45,6 @@ function allPlatforms() {
   return PLATFORMS.map((p) => ({
     ...p,
     archiveName: `akme_${p.goos}_${p.goarch}.tar.gz`,
-    binarySubpath: "bin/akme",
   }));
 }
 

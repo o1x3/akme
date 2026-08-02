@@ -1,8 +1,8 @@
-# @o1x3/akme
+# akme-cli
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/@o1x3/akme"><img src="https://img.shields.io/npm/v/@o1x3/akme?style=for-the-badge&logo=npm&logoColor=white&color=CB3837" alt="npm version"></a>
-  <a href="https://www.npmjs.com/package/@o1x3/akme"><img src="https://img.shields.io/npm/dm/@o1x3/akme?style=for-the-badge&logo=npm&logoColor=white&color=CB3837" alt="npm downloads"></a>
+  <a href="https://www.npmjs.com/package/akme-cli"><img src="https://img.shields.io/npm/v/akme-cli?style=for-the-badge&logo=npm&logoColor=white&color=CB3837" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/akme-cli"><img src="https://img.shields.io/npm/dm/akme-cli?style=for-the-badge&logo=npm&logoColor=white&color=CB3837" alt="npm downloads"></a>
   <a href="https://github.com/o1x3/akme/releases/latest"><img src="https://img.shields.io/github/v/release/o1x3/akme?style=for-the-badge&logo=github&logoColor=white&color=181717" alt="GitHub release"></a>
 </p>
 
@@ -16,17 +16,23 @@
 
 <p align="center">personal developer CLI<br>git branch stats · coding-agent token usage · self-update</p>
 
-npm wrapper for the [akme](https://github.com/o1x3/akme) binary. Install pulls the matching platform package from the npm CDN (`@o1x3/akme-<os>-<arch>` via `optionalDependencies`). If optional deps are skipped, it falls back to the GitHub release archive with `checksums.txt` verification.
+npm wrapper for the [akme](https://github.com/o1x3/akme) binary. Install downloads the matching GitHub release archive with `checksums.txt` verification.
 
 ## Install
 
 ```sh
-npx @o1x3/akme token -i
-npm install -g @o1x3/akme
-bunx @o1x3/akme help
+npm install -g akme-cli
+npx akme-cli
 ```
 
-Global install puts `akme` on your PATH.
+Both install or **update** the native CLI to the latest GitHub release and print the greeting (they do not run a command). Then:
+
+```sh
+akme help
+akme token -i
+```
+
+`AKME_NPM_QUIET=1` skips the greeting. Run a command: `npx akme-cli <cmd>` / `bunx akme-cli <cmd>`.
 
 ## Quick start
 
@@ -37,24 +43,12 @@ akme token
 akme token -i
 ```
 
-```sh
-akme help git
-akme help token
-akme help token harness
-```
-
 ## Notes
 
-Binary self-update is off for npm installs. Update with the package manager instead:
+Binary self-update inside the Go binary is off for npm installs (`AKME_NO_UPDATE=1`). Use bare `npx akme-cli` / `npm update -g akme-cli` to refresh.
 
 ```sh
-npm update -g @o1x3/akme
-```
-
-Point at a local binary (skips the download):
-
-```sh
-AKME_BINARY=/path/to/akme npx @o1x3/akme version
+AKME_BINARY=/path/to/akme npx akme-cli version
 ```
 
 macOS and Linux only (`amd64` / `arm64`). Full docs: [github.com/o1x3/akme](https://github.com/o1x3/akme#readme).
