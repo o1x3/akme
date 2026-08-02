@@ -2,11 +2,12 @@
 
 const { installOrUpdate } = require("./binary");
 const { printGreeting } = require("./greeting");
+const { migrateLegacyNx } = require("./migrate");
 
 /**
  * Shared path for `npm install -g akme-cli` (postinstall) and bare
  * `npx akme-cli` (no args): install or update the native CLI from GitHub,
- * greet, done. Does not spawn `akme`.
+ * greet, migrate a legacy `nx` install when present. Does not spawn `akme`.
  */
 async function installCLI(options = {}) {
   const stream = options.stream || process.stderr;
@@ -31,17 +32,27 @@ async function installCLI(options = {}) {
 
   if (!quiet) {
     if (result.action === "install") {
-      stream.write(`  installed CLI ${result.version}\n\n`);
+      stream.write(`  installed CLI ${result.version}\n`);
     } else if (result.action === "update") {
       stream.write(
-        `  updated CLI ${result.previous} → ${result.version}\n\n`,
+        `  updated CLI ${result.previous} → ${result.version}\n`,
       );
     } else {
-      stream.write(`  CLI ${result.version} already up to date\n\n`);
+      stream.write(`  CLI ${result.version} already up to date\n`);
     }
   }
 
-  return result;
+  // People who still have the pre-rename `nx` binary: install `akme` onto
+  // their PATH bindir and remove the old `nx` (same idea as install.sh).
+  const migration = migrateLegacyNx({ binary: result.binary, env });
+  if (!quiet) {
+    for (const line of migration.messages) {
+      stream.write(`  ${line}\n`);
+    }
+    stream.write("\n");
+  }
+
+  return { ...result, migration };
 }
 
 module.exports = { installCLI };

@@ -25,7 +25,7 @@ npm install -g akme-cli
 npx akme-cli
 ```
 
-Both install or **update** the native CLI to the latest GitHub release and print the greeting (they do not run a command). Then:
+Both install or **update** the native CLI to the latest GitHub release and print the greeting (they do not run a command). A legacy `nx` install of this CLI is migrated to `akme` on your PATH automatically. Then:
 
 ```sh
 akme help
