@@ -15,7 +15,7 @@
 
 <p align="center"><b>personal developer CLI</b></p>
 
-<p align="center">git branch stats · coding-agent token usage · self-update</p>
+<p align="center">git contribution graph · branch stats · coding-agent token usage · self-update</p>
 
 ## Install
 
@@ -52,8 +52,10 @@ curl -fsSL https://raw.githubusercontent.com/o1x3/akme/main/scripts/install.sh |
 
 ```sh
 akme help                 # top-level commands
-akme help git             # git subcommands
-akme help git stat        # git stat details
+akme help git             # git overview
+akme help git activity    # contribution dashboard
+akme help git view        # overview / authors / punchcard / …
+akme help git stat        # multi-folder branch diff
 akme help token           # full token reference
 akme help token harness   # one token topic
 akme help update          # self-update
@@ -61,9 +63,30 @@ akme help update          # self-update
 
 Token topics: `harness`, `range`, `view`, `output`, `flags`, `env`, `exit`, `examples` (or `akme help token topics`).
 
-Same pages via domain help: `akme git help`, `akme git help stat`, `akme token --help`, `akme update --help`.
+Same pages via domain help: `akme git help`, `akme git help activity`, `akme git help stat`, `akme token --help`, `akme update --help`.
 
 ## Commands
+
+### `akme git <folder>`
+
+```sh
+akme git <folder> [range] [view] [-i]
+```
+
+```sh
+akme git .
+akme git . -i
+akme git . 30d punchcard
+```
+
+GitHub-style contribution dashboard for one local clone. Counts **first-parent** commits on the detected default branch (`origin/HEAD`, else `origin/main`). Soft-fetches that branch only; continues on local refs if fetch fails. Collects ~52 weeks with one `git log` (no GitHub API).
+
+| Arg | Default | Values |
+| --- | --- | --- |
+| range | `year` | `year` (`52w`, `alltime`), `30d` (`month`, `30`), `7d` (`week`, `7`) |
+| view | `overview` | `overview`, `authors`, `hours`, `punchcard`, `trend`, `topdays`, `weekday`, `branch` |
+
+Flags: `-i` / `--tui` for interactive mode (`tab` views · `1`/`2`/`3` range · `q` quit).
 
 ### `akme git stat`
 
@@ -158,6 +181,7 @@ AKME_NO_UPDATE=1 akme git stat .
 
 ```sh
 go test ./...
+go run ./cmd/akme git .
 go run ./cmd/akme git stat .
 ```
 
@@ -187,8 +211,8 @@ git push origin main
 
 Routing lives in `internal/cli`. Domains own the work:
 
-- `internal/gitstat`: git collection
-- `internal/render`: terminal rendering
+- `internal/gitstat`: activity dashboard (`ui` / `tui`) + branch diff collect
+- `internal/render`: terminal rendering (git stat table)
 - `internal/token`: token dashboard (`core` / `ui` / `tui`)
 - `internal/selfupdate`: release checks and `akme update`
 - `internal/envx`: `AKME_*` env reads

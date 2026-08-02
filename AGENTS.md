@@ -11,8 +11,8 @@
 
 Current domains:
 
-- `internal/gitstat`: repository diff stats against the remote default branch.
-- `internal/render`: Lip Gloss terminal presentation.
+- `internal/gitstat`: default-branch activity (contribution heatmap / TUI) and repository diff stats; `ui` + `tui` for the activity dashboard.
+- `internal/render`: Lip Gloss terminal presentation (git stat table).
 - `internal/selfupdate`: per-invocation GitHub release checks (via `releases/latest`, not the API) and binary replacement; also backs `akme update`.
 - `internal/token`: coding-agent token/cost usage stats across harnesses (claude, codex, pi, cursor), with `core` collection, `ui` rendering, and `tui` interactive views.
 
@@ -31,6 +31,7 @@ akme <domain> <verb> [args]
 Example:
 
 ```sh
+akme git .
 akme git stat repo-a repo-b
 ```
 
@@ -46,7 +47,7 @@ akme help <domain>        # domain overview + subcommands/topics
 akme help <domain> <verb> # verb / topic detail
 ```
 
-Examples that must keep working: `akme help git`, `akme help git stat`, `akme help token`, `akme help token harness`.
+Examples that must keep working: `akme help git`, `akme help git activity`, `akme help git stat`, `akme help token`, `akme help token harness`.
 
 Precedent (keep this current when commands change):
 
@@ -89,7 +90,7 @@ Pushing a `VERSION` change to `main` creates tag `v<VERSION>` and publishes both
 `akme` is a single Go CLI (no servers/databases). Standard commands live in `README.md` ("Development") and `scripts/check.sh`; use those. Notes below are only the non-obvious caveats.
 
 - Toolchain: `go.mod` pins `go 1.25.0`; the `go` toolchain auto-downloads it on first use, so no manual Go install is needed.
-- Run in dev with `go run ./cmd/akme <cmd>` (e.g. `go run ./cmd/akme git stat .`). Local/`go run` builds report version `dev` and never self-update, so `AKME_NO_UPDATE=1` is unnecessary for dev.
+- Run in dev with `go run ./cmd/akme <cmd>` (e.g. `go run ./cmd/akme git .`). Local/`go run` builds report version `dev` and never self-update, so `AKME_NO_UPDATE=1` is unnecessary for dev.
 - `akme token` reads local AI-harness data dirs (`~/.claude`, `~/.codex`, `~/.pi`, Cursor SQLite stores). A fresh VM has none, so the dashboard shows "No tokens recorded yet" and output modes (`json`/`quiet`/`compare`) exit `3`. That is expected, not a failure.
 - Full local gate: `scripts/check.sh` is exactly what CI runs (`.github/workflows/release.yml` test job = Go from `go.mod` + Node 22 + `scripts/check.sh`; release job follows when `VERSION` bumps), so a green local run means green CI. It runs `gofmt -l .`, `go test ./...`, `sh -n` on the shell scripts, and version validation. It ALSO checks the npm package (`node --check` on `npm/bin`, `npm/lib`, `npm/scripts` JS + `node --test npm/lib/*.test.js`) — but only when `node` is on PATH, otherwise those checks are silently skipped. The cloud VM ships Node 22, so the full gate (Go + npm) runs here; do not rely on a machine without `node` to catch npm-package regressions.
 - Version gate: `scripts/validate-version.sh` requires `VERSION` to be plain `major.minor.patch`, to have a matching `## <version>` section in `CHANGELOG.md`, and to equal `npm/package.json`'s `version` (with `name` == `akme-cli` and no `optionalDependencies`). It shells out to `node` to read `npm/package.json`, so it needs `node` present when that file exists. Bumping `VERSION` without also updating `CHANGELOG.md` and `npm/package.json` fails the gate.

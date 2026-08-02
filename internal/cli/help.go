@@ -57,6 +57,26 @@ func gitHelpFor(args []string) (string, error) {
 			return "", ExitError{Code: 2, Err: fmt.Errorf("unknown help topic %q\n\n%s", args[1], strings.TrimSpace(gitStatHelpText()))}
 		}
 		return gitStatHelpText(), nil
+	case "activity", "folder", "graph":
+		if len(args) > 1 {
+			return "", ExitError{Code: 2, Err: fmt.Errorf("unknown help topic %q\n\n%s", args[1], strings.TrimSpace(gitActivityHelpText()))}
+		}
+		return gitActivityHelpText(), nil
+	case "view", "views", "tab", "tabs":
+		if len(args) > 1 {
+			return "", ExitError{Code: 2, Err: fmt.Errorf("unknown help topic %q\n\n%s", args[1], strings.TrimSpace(gitViewHelpText()))}
+		}
+		return gitViewHelpText(), nil
+	case "range", "ranges":
+		if len(args) > 1 {
+			return "", ExitError{Code: 2, Err: fmt.Errorf("unknown help topic %q\n\n%s", args[1], strings.TrimSpace(gitRangeHelpText()))}
+		}
+		return gitRangeHelpText(), nil
+	case "interactive", "tui", "-i":
+		if len(args) > 1 {
+			return "", ExitError{Code: 2, Err: fmt.Errorf("unknown help topic %q\n\n%s", args[1], strings.TrimSpace(gitInteractiveHelpText()))}
+		}
+		return gitInteractiveHelpText(), nil
 	case "help", "-h", "--help":
 		return gitHelpText(), nil
 	default:
@@ -152,14 +172,112 @@ Aliases:
 
 func gitHelpText() string {
 	return `Usage:
-  akme git <subcommand> [args]
-  akme help git [subcommand]
+  akme git <folder> [range] [view] [-i]
+  akme git stat [--jobs <n>] <folder> [folder...]
+  akme help git [topic]
 
-Subcommands:
-  stat   Show branch diff stats against the repo default branch
+Show a GitHub-style contribution graph for first-parent activity on the
+repo's default branch (from the local clone), or branch diff stats.
+
+Topics:
+  activity      akme git <folder> dashboard (default)
+  view          overview, authors, hours, punchcard, ...
+  range         year / 30d / 7d
+  interactive   -i / --tui keys
+  stat          multi-folder branch diff table
 
 Nest help:
+  akme help git activity
+  akme help git view
+  akme help git range
+  akme help git interactive
   akme help git stat
+
+Examples:
+  akme git .
+  akme git . -i
+  akme git . 30d punchcard
+  akme git stat repo-a repo-b
+
+`
+}
+
+func gitActivityHelpText() string {
+	return `Usage:
+  akme git <folder> [range] [view] [-i]
+
+Contribution dashboard for one local clone. Counts first-parent commits
+on the detected default branch (origin/HEAD → origin/main fallback).
+
+Arguments:
+  <folder>   Path relative to the current working directory
+
+Notes:
+  - Soft-fetches only the default branch; continues on local refs if fetch fails
+  - Collects ~52 weeks of history (one git log; no GitHub API)
+  - Static card by default; pass -i for the interactive TUI
+
+Examples:
+  akme git .
+  akme git ./my-repo year authors
+  akme git . -i
+
+`
+}
+
+func gitViewHelpText() string {
+	return `Usage:
+  akme git <folder> [view]
+  akme help git view
+
+VIEW      (default: overview)
+  overview          52-week contribution heatmap
+  authors           top committers on the default branch
+  hours             commits by hour of day
+  punchcard         weekday × hour density grid
+  trend             daily commit sparkline
+  topdays           busiest civil days
+  weekday           commits by weekday
+  branch            HEAD vs default branch files/+/-
+
+Aliases: punch/when, busy/topdays, dow/weekday, spark/trend, diff/stat→branch
+
+`
+}
+
+func gitRangeHelpText() string {
+	return `Usage:
+  akme git <folder> [range]
+  akme help git range
+
+RANGE     (default: year)
+  year     last ~52 weeks of first-parent commits on the default branch
+  30d      last 30 days
+  7d       last 7 days
+
+Aliases: 52w/alltime/all → year; month/30 → 30d; week/7 → 7d
+
+In the TUI: 1=year · 2=30d · 3=7d · r cycles
+
+`
+}
+
+func gitInteractiveHelpText() string {
+	return `Usage:
+  akme git <folder> -i
+  akme help git interactive
+
+Interactive mode (Bubble Tea alt screen):
+  tab / ⇧tab     cycle views
+  1 / 2 / 3      year / 30d / 7d
+  r              cycle range
+  q / esc        quit
+
+Aliases: --interactive, -t, --tui, tui
+
+ENV
+  AKME_BACKGROUND     light|dark — override terminal background detection
+  AKME_TRUECOLOR      set to force 24-bit colour
 
 `
 }

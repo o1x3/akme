@@ -68,7 +68,7 @@ func (a App) runUpdate(ctx context.Context, args []string, stdout, stderr io.Wri
 
 func (a App) runGit(ctx context.Context, args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return ExitError{Code: 2, Err: fmt.Errorf("missing git subcommand\n\n%s", strings.TrimSpace(gitHelpText()))}
+		return ExitError{Code: 2, Err: fmt.Errorf("missing git folder or subcommand\n\n%s", strings.TrimSpace(gitHelpText()))}
 	}
 
 	switch args[0] {
@@ -88,7 +88,8 @@ func (a App) runGit(ctx context.Context, args []string, stdout io.Writer) error 
 		fmt.Fprint(stdout, render.GitStats(stats))
 		return nil
 	default:
-		return ExitError{Code: 2, Err: fmt.Errorf("unknown git subcommand %q\n\n%s", args[0], strings.TrimSpace(gitHelpText()))}
+		// Bare path (and optional range/tab/-i) → contribution activity dashboard.
+		return a.runGitActivity(ctx, args, stdout)
 	}
 }
 

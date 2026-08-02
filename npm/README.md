@@ -14,7 +14,7 @@
 
 <p align="center"><b>akme</b></p>
 
-<p align="center">personal developer CLI<br>git branch stats · coding-agent token usage · self-update</p>
+<p align="center">personal developer CLI<br>git contribution graph · branch stats · coding-agent token usage · self-update</p>
 
 npm wrapper for the [akme](https://github.com/o1x3/akme) binary. Install downloads the matching GitHub release archive with `checksums.txt` verification.
 
@@ -38,6 +38,8 @@ akme token -i
 
 ```sh
 akme help
+akme git .
+akme git . -i
 akme git stat .
 akme token
 akme token -i
