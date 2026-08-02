@@ -11,19 +11,36 @@ const { printGreeting } = require("./greeting");
 async function installCLI(options = {}) {
   const stream = options.stream || process.stderr;
   const env = options.env || process.env;
+  const quiet = env.AKME_NPM_QUIET === "1";
+
   // Art first, then install/update (never spawn the Go CLI here).
   printGreeting(stream, env);
-  if (env.AKME_NPM_QUIET !== "1") {
-    stream.write("  installing / updating CLI…\n");
-  }
-  const result = await installOrUpdate();
-  if (env.AKME_NPM_QUIET !== "1") {
-    if (result.updated) {
-      stream.write(`  updated CLI → ${result.version}\n\n`);
+
+  const result = await installOrUpdate({
+    onStatus(status) {
+      if (quiet) return;
+      if (status.action === "install") {
+        stream.write(`  installing CLI ${status.version}…\n`);
+      } else if (status.action === "update") {
+        stream.write(
+          `  updating CLI ${status.previous} → ${status.version}…\n`,
+        );
+      }
+    },
+  });
+
+  if (!quiet) {
+    if (result.action === "install") {
+      stream.write(`  installed CLI ${result.version}\n\n`);
+    } else if (result.action === "update") {
+      stream.write(
+        `  updated CLI ${result.previous} → ${result.version}\n\n`,
+      );
     } else {
-      stream.write(`  CLI ${result.version} ready\n\n`);
+      stream.write(`  CLI ${result.version} already up to date\n\n`);
     }
   }
+
   return result;
 }
 

@@ -286,9 +286,15 @@ async function ensureBinary() {
 
 /**
  * Install or update to the latest GitHub release (bare `npx akme-cli` /
- * postinstall). Returns { binary, version, updated }.
+ * postinstall). Returns { binary, version, previous, action }.
+ * action: "install" | "update" | "unchanged"
+ *
+ * Optional onStatus({ action, version, previous }) fires before download
+ * (or immediately for unchanged).
  */
-async function installOrUpdate() {
+async function installOrUpdate(options = {}) {
+  const onStatus = options.onStatus;
+
   const override =
     process.env.AKME_BINARY ||
     process.env.AKME_NX_BINARY ||
@@ -298,7 +304,15 @@ async function installOrUpdate() {
     if (!fs.existsSync(resolved)) {
       throw new Error(`akme: AKME_BINARY not found: ${resolved}`);
     }
-    return { binary: resolved, version: installedVersion() || packageVersion(), updated: false };
+    const version = installedVersion() || packageVersion();
+    const result = {
+      binary: resolved,
+      version,
+      previous: "",
+      action: "unchanged",
+    };
+    onStatus?.(result);
+    return result;
   }
 
   const latestTag = await latestReleaseTag();
@@ -312,20 +326,42 @@ async function installOrUpdate() {
     fs.existsSync(dest) &&
     fs.statSync(dest).size > 0
   ) {
-    return { binary: dest, version: current, updated: false };
+    const result = {
+      binary: dest,
+      version: current,
+      previous: current,
+      action: "unchanged",
+    };
+    onStatus?.(result);
+    return result;
   }
 
   // Same version already on disk (e.g. reinstall).
   if (fs.existsSync(dest) && fs.statSync(dest).size > 0 && current === latest) {
-    return { binary: dest, version: latest, updated: false };
+    const result = {
+      binary: dest,
+      version: latest,
+      previous: current,
+      action: "unchanged",
+    };
+    onStatus?.(result);
+    return result;
   }
+
+  const action = current && newer(latest, current) ? "update" : "install";
+  const pending = {
+    binary: dest,
+    version: latest,
+    previous: current || "",
+    action,
+  };
+  onStatus?.(pending);
 
   await downloadFromGitHub(latest, dest);
   writeInstalledVersion(latest);
   return {
-    binary: dest,
-    version: latest,
-    updated: Boolean(current) && newer(latest, current),
+    ...pending,
+    updated: action === "update",
   };
 }
 

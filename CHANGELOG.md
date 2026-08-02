@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.5
+
+- Install greeting status lines distinguish install vs update vs already up to date.
+
 ## 0.6.4
 
 - Restore the pink/white/dark-red akme ANSI wordmark from the HTML art (truecolor, no bogus spaces).
