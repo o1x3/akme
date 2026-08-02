@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.2
+
+- Bare `npx akme-cli`: show ASCII greeting first, then install/update the native CLI (never run Go usage/help).
+- Expose `bin.akme-cli` alongside `bin.akme` so `npx akme-cli` resolves the wrapper explicitly.
+
 ## 0.6.1
 
 - Single npm package **`akme-cli`** only (dropped `@o1x3/akme-*` platform optionalDependencies). Install downloads the native binary from the GitHub release.

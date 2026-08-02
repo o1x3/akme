@@ -8,7 +8,8 @@ const { installCLI } = require("../lib/install");
 async function main() {
   const args = process.argv.slice(2);
 
-  // Bare `npx akme-cli` / `akme` with no args → same as npm install postinstall.
+  // Bare `npx akme-cli` / `akme` with no args → greeting + install/update only.
+  // Never forward empty argv to the Go binary (that prints usage + may self-update).
   if (args.length === 0) {
     await installCLI();
     return;
