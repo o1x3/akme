@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.6
+
+- Bare `npx akme-cli` / `npm install -g akme-cli` auto-migrate a legacy `nx` install: copy `akme` onto the user bindir (`~/.local/bin` or `AKME_INSTALL_DIR`), remove the old `nx` binary, and refresh installer PATH markers. Unrelated `nx` tools (e.g. Nrwl) are left alone via version/binary fingerprinting.
+
 ## 0.6.5
 
 - Install greeting status lines distinguish install vs update vs already up to date.
