@@ -77,14 +77,24 @@ func TestParseTokenArgs(t *testing.T) {
 			want: tokenOptions{harness: core.Cursor, rng: core.RangeAll, tab: ui.TabOverview},
 		},
 		{
-			name: "bare all is a harness not a range",
+			name: "bare all includes cache reads",
 			args: []string{"all"},
-			want: tokenOptions{harness: core.Combined, rng: core.RangeAll, tab: ui.TabOverview},
+			want: tokenOptions{harness: core.Combined, rng: core.RangeAll, tab: ui.TabOverview, includeCache: true},
 		},
 		{
 			name: "combined alias",
 			args: []string{"everything"},
 			want: tokenOptions{harness: core.Combined, rng: core.RangeAll, tab: ui.TabOverview},
+		},
+		{
+			name: "combined keyword",
+			args: []string{"combined"},
+			want: tokenOptions{harness: core.Combined, rng: core.RangeAll, tab: ui.TabOverview},
+		},
+		{
+			name: "claude all counting",
+			args: []string{"claude", "all", "quiet"},
+			want: tokenOptions{harness: core.Claude, rng: core.RangeAll, tab: ui.TabOverview, includeCache: true, quiet: true},
 		},
 		{
 			name: "range 30d aliases",

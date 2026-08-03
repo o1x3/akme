@@ -142,15 +142,15 @@ func TestSummarizeWindow(t *testing.T) {
 	a.ByDayMsgs["2026-06-01"] = 60
 	a.ByDayTokens["2026-06-01"] = 800
 
-	all := Summarize(a, RangeAll, now)
-	if all.TotalTokens != a.TotalTokens() {
-		t.Errorf("all-range total = %d, want %d", all.TotalTokens, a.TotalTokens())
+	all := Summarize(a, RangeAll, now, false)
+	if all.TotalTokens != a.CountedTokens(false) {
+		t.Errorf("all-range total = %d, want %d", all.TotalTokens, a.CountedTokens(false))
 	}
 	if all.ActiveDays != 2 {
 		t.Errorf("all-range active days = %d, want 2", all.ActiveDays)
 	}
 
-	week := Summarize(a, Range7d, now)
+	week := Summarize(a, Range7d, now, false)
 	if week.ActiveDays != 1 {
 		t.Errorf("7d active days = %d, want 1 (only 06-28)", week.ActiveDays)
 	}
@@ -159,6 +159,52 @@ func TestSummarizeWindow(t *testing.T) {
 	}
 	if week.Messages != 40 {
 		t.Errorf("7d messages = %d, want 40", week.Messages)
+	}
+}
+
+func TestSummarizeExcludesCacheReadByDefault(t *testing.T) {
+	now := time.Date(2026, 6, 29, 12, 0, 0, 0, time.Local)
+	a := newAggregate(Claude)
+	a.InputTokens = 100
+	a.OutputTokens = 50
+	a.CacheReadTokens = 400
+	a.CacheWriteTokens = 25
+	a.ByDayMsgs["2026-06-29"] = 3
+	a.ByDayTokens["2026-06-29"] = 575 // full ledger for the day
+	a.ByDayModelTok["2026-06-29"] = map[string]int64{"claude-opus-4-8": 575}
+	a.ByDayModelMsg["2026-06-29"] = map[string]int{"claude-opus-4-8": 3}
+
+	fresh := Summarize(a, RangeAll, now, false)
+	if fresh.IncludeCache {
+		t.Error("default summary must exclude cache reads")
+	}
+	wantFresh := int64(100 + 50 + 25) // in + out + cache write
+	if fresh.TotalTokens != wantFresh {
+		t.Errorf("fresh total = %d, want %d", fresh.TotalTokens, wantFresh)
+	}
+	if fresh.CacheReadTokens != 400 {
+		t.Errorf("cache_read ledger = %d, want 400 (still reported)", fresh.CacheReadTokens)
+	}
+	if len(fresh.Models) != 1 || fresh.Models[0].Tokens != wantFresh {
+		t.Errorf("model tokens = %v, want scaled to %d", fresh.Models, wantFresh)
+	}
+
+	full := Summarize(a, RangeAll, now, true)
+	if !full.IncludeCache {
+		t.Error("all mode must include cache reads")
+	}
+	if full.TotalTokens != a.TotalTokens() {
+		t.Errorf("full total = %d, want %d", full.TotalTokens, a.TotalTokens())
+	}
+	if full.Models[0].Tokens != 575 {
+		t.Errorf("full model tokens = %d, want 575", full.Models[0].Tokens)
+	}
+
+	// Windowed: proportional split then drop cache reads from the headline.
+	week := Summarize(a, Range7d, now, false)
+	if week.TotalTokens != week.InputTokens+week.OutputTokens+week.CacheWriteTokens {
+		t.Errorf("7d fresh total %d != in+out+write %d", week.TotalTokens,
+			week.InputTokens+week.OutputTokens+week.CacheWriteTokens)
 	}
 }
 

@@ -77,9 +77,40 @@ func newAggregate(h string) *Aggregate {
 }
 
 // TotalTokens is every token that flowed through the model: fresh input,
-// output, cache reads and cache writes.
+// output, cache reads and cache writes (full ledger).
 func (a *Aggregate) TotalTokens() int64 {
 	return a.InputTokens + a.OutputTokens + a.CacheReadTokens + a.CacheWriteTokens
+}
+
+// CountedTokens is the headline volume for a counting mode. With includeCache
+// false (default), prompt-cache reads are dropped; cache writes stay because
+// they are billed creation, not reuse. With includeCache true, matches TotalTokens.
+func (a *Aggregate) CountedTokens(includeCache bool) int64 {
+	n := a.InputTokens + a.OutputTokens + a.CacheWriteTokens
+	if includeCache {
+		n += a.CacheReadTokens
+	}
+	return n
+}
+
+// dayTokenScale apportions per-day token series when excluding cache reads,
+// using the all-time ledger mix (same approach as windowed in/out/cache splits).
+func (a *Aggregate) dayTokenScale(includeCache bool) float64 {
+	if includeCache {
+		return 1
+	}
+	total := a.TotalTokens()
+	if total == 0 {
+		return 1
+	}
+	return float64(a.InputTokens+a.OutputTokens+a.CacheWriteTokens) / float64(total)
+}
+
+func scaleTokens(v int64, scale float64) int64 {
+	if scale == 1 || v == 0 {
+		return v
+	}
+	return int64(float64(v) * scale)
 }
 
 // noteMessage records a message at time t (local) under model m, adding tok

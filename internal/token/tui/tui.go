@@ -26,27 +26,30 @@ type Options struct {
 	Dark           bool // initial background guess from the CLI's detection
 	DarkLocked     bool // AKME_BACKGROUND set: never re-detect the background
 	ForceTruecolor bool // AKME_TRUECOLOR set: emit 24-bit colour regardless
+	IncludeCache   bool // include prompt-cache reads in totals (CLI `all`)
 }
 
 type model struct {
-	aggs    map[string]*core.Aggregate
-	hi, ri  int // harness / range index
-	tab     int
-	now     time.Time
-	w, h    int
-	hintCol lipgloss.Style
-	dark    bool // terminal background is dark
-	plain   bool // terminal has no color support
-	opts    Options
+	aggs         map[string]*core.Aggregate
+	hi, ri       int // harness / range index
+	tab          int
+	now          time.Time
+	w, h         int
+	hintCol      lipgloss.Style
+	dark         bool // terminal background is dark
+	plain        bool // terminal has no color support
+	opts         Options
+	includeCache bool
 }
 
 // New builds the interactive model with the given start harness/range/tab.
 func New(harness, rng, tab string, opts Options) model {
 	m := model{
-		aggs: core.LoadEach(), // one pass over every harness, Combined included
-		now:  time.Now(),
-		dark: opts.Dark,
-		opts: opts,
+		aggs:         core.LoadEach(), // one pass over every harness, Combined included
+		now:          time.Now(),
+		dark:         opts.Dark,
+		opts:         opts,
+		includeCache: opts.IncludeCache,
 	}
 	m.hi = indexOf(harnesses, harness, 0)
 	m.ri = indexOf(ranges, rng, 0)
@@ -112,7 +115,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() tea.View {
 	agg := m.aggs[harnesses[m.hi]]
-	s := core.Summarize(agg, ranges[m.ri], m.now)
+	s := core.Summarize(agg, ranges[m.ri], m.now, m.includeCache)
 	card := ui.RenderCard(s, tabs[m.tab])
 
 	hint := m.hintCol.Render("←/→ harness · tab/⇧tab views · 1/2/3 range · q quit")

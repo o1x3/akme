@@ -61,7 +61,7 @@ akme help token harness   # one token topic
 akme help update          # self-update
 ```
 
-Token topics: `harness`, `range`, `view`, `output`, `flags`, `env`, `exit`, `examples` (or `akme help token topics`).
+Token topics: `harness`, `range`, `count`, `view`, `output`, `flags`, `env`, `exit`, `examples` (or `akme help token topics`).
 
 Same pages via domain help: `akme git help`, `akme git help activity`, `akme git help stat`, `akme token --help`, `akme update --help`.
 
@@ -103,27 +103,31 @@ Each folder is relative to your cwd. Fetches the remote default branch on `origi
 ### `akme token`
 
 ```sh
-akme token [harness] [range] [view] [-i]
-akme token [harness] [range] (json | quiet | compare)
+akme token [harness] [range] [view] [all] [-i]
+akme token [harness] [range] [all] (json | quiet | compare)
 ```
 
 Terminal dashboard for coding-agent token usage (alias: `akme tokens`). Args are positional and order-independent.
 
+Headline totals **exclude prompt-cache reads by default** (cache writes stay). Pass `all` to include cache reads in totals, day series, quiet, compare, and JSON `tokens.total`. Mix/cost still show the full ledger; JSON always reports `cache_read` / `cache_write` and `include_cache`.
+
 | Arg | Default | Values |
 | --- | --- | --- |
-| harness | `all` | `claude` (`cc`, `claude-code`), `codex` (`cx`), `pi` (`pi.dev`, `pidev`), `cursor` (`cursor-ide`, `cursor-cli`, `cursor-agent`), `all` (`combined`, `everything`) |
+| harness | `combined` | `claude` (`cc`, `claude-code`), `codex` (`cx`), `pi` (`pi.dev`, `pidev`), `cursor` (`cursor-ide`, `cursor-cli`, `cursor-agent`), `combined` (`everything`) |
 | range | all-time | `alltime` (`lifetime`), `30d` (`month`, `30`), `7d` (`week`, `7`) |
+| counting | exclude cache reads | `all` (include cache reads) |
 | view | `overview` | `overview`, `models`, `hours`, `punchcard`, `trend`, `topdays`, `weekday`, `cost`, `mix` |
 
-Output modes (skip the card): `json` (NDJSON for `all`), `quiet` / `-q` (one prompt-safe line), `compare` / `vs` (side by side).
+Output modes (skip the card): `json` (NDJSON for combined harness), `quiet` / `-q` (one prompt-safe line), `compare` / `vs` (side by side).
 
 Flags: `-i` / `--tui` for interactive mode, `-h` / `--help`.
 
 ```sh
-akme token                    # all harnesses, all time
+akme token                    # all harnesses, all time (no cache reads)
+akme token all                # same, including cache reads
 akme token codex 7d cost      # Codex spend, last 7 days
 akme token claude punchcard   # Claude Code weekday × hour grid
-akme token all json | jq -s   # NDJSON, one object per harness
+akme token all json | jq -s   # NDJSON per harness, full ledger totals
 akme token -i                 # ←/→ harness · tab/⇧tab views · 1/2/3 range · q quit
 ```
 
