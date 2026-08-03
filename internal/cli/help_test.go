@@ -34,7 +34,27 @@ func TestNestedHelp(t *testing.T) {
 		{
 			name: "git overview",
 			args: []string{"help", "git"},
-			want: []string{"akme git <subcommand>", "akme help git stat", "stat"},
+			want: []string{"akme git <folder>", "akme help git stat", "activity", "interactive"},
+		},
+		{
+			name: "git activity",
+			args: []string{"help", "git", "activity"},
+			want: []string{"akme git <folder> [range] [view] [-i]", "first-parent", "52 weeks"},
+		},
+		{
+			name: "git view",
+			args: []string{"help", "git", "view"},
+			want: []string{"overview", "punchcard", "branch"},
+		},
+		{
+			name: "git range",
+			args: []string{"help", "git", "range"},
+			want: []string{"year", "30d", "7d"},
+		},
+		{
+			name: "git interactive",
+			args: []string{"help", "git", "interactive"},
+			want: []string{"tab / ⇧tab", "AKME_BACKGROUND", "-i"},
 		},
 		{
 			name: "git stat",
@@ -44,7 +64,7 @@ func TestNestedHelp(t *testing.T) {
 		{
 			name: "git help via domain",
 			args: []string{"git", "help"},
-			want: []string{"akme git <subcommand>", "akme help git stat"},
+			want: []string{"akme git <folder>", "akme help git stat"},
 		},
 		{
 			name: "git help stat via domain",

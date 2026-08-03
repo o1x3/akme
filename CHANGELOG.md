@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.0
+
+- Revamped `akme git <folder>` into a contribution activity dashboard (GitHub-style heatmap) for first-parent commits on the local default branch, with views for authors, hours, punchcard, trend, top days, weekday, and branch diff.
+- Added interactive mode: `akme git <folder> -i` (tab views · 1/2/3 range · q quit), matching the `akme token` TUI shape.
+- Nested help topics: `akme help git activity|view|range|interactive` (kept `akme help git stat`).
+- Kept `akme git stat` as the multi-folder branch-diff table.
+
 ## 0.6.6
 
 - Bare `npx akme-cli` / `npm install -g akme-cli` auto-migrate a legacy `nx` install: copy `akme` onto the user bindir (`~/.local/bin` or `AKME_INSTALL_DIR`), remove the old `nx` binary, and refresh installer PATH markers. Unrelated `nx` tools (e.g. Nrwl) are left alone via version/binary fingerprinting.
