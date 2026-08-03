@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.1
+
+- Tightened `akme git` overview vertical spacing (banner sits on the body; legend sits on the heatmap).
+- Made overview horizontal width consistent: full-width banner rule, heatmap stretched to the card edge, legend and section title aligned to `contentW`.
+
 ## 0.7.0
 
 - Revamped `akme git <folder>` into a contribution activity dashboard (GitHub-style heatmap) for first-parent commits on the local default branch, with views for authors, hours, punchcard, trend, top days, weekday, and branch diff.

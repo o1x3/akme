@@ -70,12 +70,14 @@ var weekdayNames = [7]string{"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"}
 // RenderCard renders the full activity dashboard for a summary.
 func RenderCard(s gitstat.Summary, tab string) string {
 	th := DefaultTheme()
+	// Single blank after the tab strip and before the footer. Banner sits
+	// directly on the body so the overview heatmap is not pushed down by a
+	// stacked spacer above Contributions.
 	blocks := []string{
 		renderHeader(th, s, tab),
 		renderTabStrip(th, tab),
 		"",
 		renderBanner(th, s),
-		"",
 		renderBody(th, s, tab),
 		"",
 		renderFooter(th, s),
@@ -153,7 +155,7 @@ func renderBanner(th Theme, s gitstat.Summary) string {
 
 	rows := []string{
 		line1,
-		styled(th.Accent).Render(strings.Repeat("─", min(lipgloss.Width(line1), contentW))),
+		styled(th.Accent).Render(strings.Repeat("─", contentW)),
 		leaderRow("commits", gitstat.FormatInt(s.Commits), contentW),
 		leaderRow("active days", gitstat.FormatInt(s.ActiveDays), contentW),
 		leaderRow("authors", gitstat.FormatInt(s.Authors), contentW),
@@ -190,8 +192,10 @@ func Hint(s string) string {
 }
 
 func sectionTitle(th Theme, weeks int) string {
-	return styled(th.Accent).Bold(true).Render("Contributions") +
-		styled(muted()).Render(fmt.Sprintf(" · last %d weeks", weeks))
+	return padRight(
+		styled(th.Accent).Bold(true).Render("Contributions")+
+			styled(muted()).Render(fmt.Sprintf(" · last %d weeks", weeks)),
+		contentW)
 }
 
 func renderHeatmap(th Theme, h gitstat.Heatmap) string {
@@ -199,25 +203,67 @@ func renderHeatmap(th Theme, h gitstat.Heatmap) string {
 		return ""
 	}
 	cols := h.Weeks
-	// Compact single-width cells: gutter + cols fits contentW (4+52=56).
-	if maxCols := contentW - gutterW; cols > maxCols {
-		cols = maxCols
+	avail := contentW - gutterW
+	if cols > avail {
+		cols = avail
 	}
+	gaps := heatGaps(cols, avail)
 	plain := ascii()
 	gut := [7]string{"    ", "Mon ", "    ", "Wed ", "    ", "Fri ", "    "}
 
 	rows := make([]string, 0, 12)
-	rows = append(rows, renderMonthRow(h, cols))
+	rows = append(rows, renderMonthRow(h, cols, gaps))
 	for r := range 7 {
 		var sb strings.Builder
 		sb.WriteString(styled(label()).Render(gut[r]))
 		for col := range cols {
 			sb.WriteString(heatCell(th, h.Cells[r][col], h.Max, plain))
+			if gaps[col] > 0 {
+				sb.WriteString(strings.Repeat(" ", gaps[col]))
+			}
 		}
 		rows = append(rows, sb.String())
 	}
-	rows = append(rows, "", renderLegend(th, plain))
+	rows = append(rows, renderLegend(th, plain))
 	return strings.Join(rows, "\n")
+}
+
+// heatGaps distributes (avail-cols) spacer columns so a year heatmap spans
+// contentW. Spacers are spread evenly across inter-cell gaps (Bresenham);
+// any remainder pads after the last cell.
+func heatGaps(cols, avail int) []int {
+	gaps := make([]int, cols)
+	if cols <= 0 {
+		return gaps
+	}
+	extra := avail - cols
+	if extra <= 0 {
+		return gaps
+	}
+	if cols == 1 {
+		gaps[0] = extra
+		return gaps
+	}
+	prev := 0
+	for i := 0; i < cols-1; i++ {
+		target := (i + 1) * extra / (cols - 1)
+		gaps[i] = target - prev
+		prev = target
+	}
+	used := cols
+	for i := 0; i < cols-1; i++ {
+		used += gaps[i]
+	}
+	gaps[cols-1] = avail - used
+	return gaps
+}
+
+func heatColX(col int, gaps []int) int {
+	x := gutterW + col
+	for i := 0; i < col && i < len(gaps); i++ {
+		x += gaps[i]
+	}
+	return x
 }
 
 func heatCell(th Theme, v, max int64, plain bool) string {
@@ -240,19 +286,17 @@ func renderLegend(th Theme, plain bool) string {
 		if plain {
 			parts = append(parts, shadeGlyphs1[i]+" ")
 		} else {
-			ch := "■"
-			if i == 0 {
-				ch = "■"
-			}
-			parts = append(parts, styled(th.Ramp[i]).Render(ch)+" ")
+			parts = append(parts, styled(th.Ramp[i]).Render("■")+" ")
 		}
 	}
 	parts = append(parts, styled(muted()).Render("More"))
-	return strings.Join(parts, "")
+	legend := strings.Join(parts, "")
+	pad := max(contentW-lipgloss.Width(legend), 0)
+	return strings.Repeat(" ", pad) + legend
 }
 
-func renderMonthRow(h gitstat.Heatmap, cols int) string {
-	gridW := gutterW + cols
+func renderMonthRow(h gitstat.Heatmap, cols int, gaps []int) string {
+	gridW := contentW
 	buf := make([]rune, gridW)
 	for i := range buf {
 		buf[i] = ' '
@@ -285,7 +329,7 @@ func renderMonthRow(h gitstat.Heatmap, cols int) string {
 		if len(queue) == 0 {
 			continue
 		}
-		x := gutterW + col
+		x := heatColX(col, gaps)
 		if x < lastEnd+1 || x+1 > gridW {
 			continue
 		}
