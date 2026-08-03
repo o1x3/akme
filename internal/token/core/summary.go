@@ -151,11 +151,9 @@ func Summarize(a *Aggregate, rng string, now time.Time, includeCache bool) Summa
 		s.CacheReadTokens = int64(float64(a.CacheReadTokens) * f)
 		s.CacheWriteTokens = int64(float64(a.CacheWriteTokens) * f)
 		s.CacheTokens = s.CacheReadTokens + s.CacheWriteTokens
-		if includeCache {
-			s.TotalTokens = windowTok
-		} else {
-			s.TotalTokens = s.InputTokens + s.OutputTokens + s.CacheWriteTokens
-		}
+		// Scale the day-sum rather than summing truncated class shares so a
+		// zero-cache ledger stays exact (1000×700/1500 + 500×700/1500 → 699).
+		s.TotalTokens = scaleTokens(windowTok, a.dayTokenScale(includeCache))
 	}
 
 	s.CurrentStreak, s.LongestStreak = a.Streaks(now)

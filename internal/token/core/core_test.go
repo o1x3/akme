@@ -202,9 +202,9 @@ func TestSummarizeExcludesCacheReadByDefault(t *testing.T) {
 
 	// Windowed: proportional split then drop cache reads from the headline.
 	week := Summarize(a, Range7d, now, false)
-	if week.TotalTokens != week.InputTokens+week.OutputTokens+week.CacheWriteTokens {
-		t.Errorf("7d fresh total %d != in+out+write %d", week.TotalTokens,
-			week.InputTokens+week.OutputTokens+week.CacheWriteTokens)
+	wantWeek := scaleTokens(575, a.dayTokenScale(false))
+	if week.TotalTokens != wantWeek {
+		t.Errorf("7d fresh total = %d, want %d", week.TotalTokens, wantWeek)
 	}
 }
 
