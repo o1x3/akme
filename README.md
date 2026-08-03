@@ -34,7 +34,7 @@ akme help
 akme token -i
 ```
 
-Bare `npx akme-cli` / `npm install -g` download (or update) the native binary from GitHub releases. Pass args to run the CLI (`npx akme-cli token`). Set `AKME_NPM_QUIET=1` to skip the greeting.
+Bare `npx akme-cli` / `npm install -g` download (or update) the native binary from GitHub releases. If a legacy `nx` install of this CLI is on your machine, they also migrate it to `akme` on your PATH (same cleanup as the curl installer). Pass args to run the CLI (`npx akme-cli token`). Set `AKME_NPM_QUIET=1` to skip the greeting.
 
 curl (installs to `~/.local/bin/akme`):
 

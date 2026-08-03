@@ -37,6 +37,9 @@ run sh -n .githooks/pre-commit
 if command -v node >/dev/null 2>&1; then
   run node --check npm/bin/akme.js
   run node --check npm/lib/binary.js
+  run node --check npm/lib/greeting.js
+  run node --check npm/lib/install.js
+  run node --check npm/lib/migrate.js
   run node --check npm/lib/platform.js
   run node --check npm/scripts/postinstall.js
   run node --check npm/scripts/publish-release.js
