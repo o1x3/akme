@@ -40,7 +40,7 @@ func sampleSummary(_ string) core.Summary {
 			"2026-06-29": {"claude-opus-4-8": 100, "gpt-5.4": 20},
 		},
 	}
-	return core.Summarize(a, core.RangeAll, now)
+	return core.Summarize(a, core.RangeAll, now, false)
 }
 
 func TestRenderCardOverview(t *testing.T) {

@@ -18,9 +18,12 @@ func TestNewSummaryJSON(t *testing.T) {
 	a.ByDayModelMsg["2026-06-29"] = map[string]int{"claude-opus-4-8": 10}
 	a.TokensEstimated = true
 
-	all := NewSummaryJSON(Summarize(a, RangeAll, now), now)
-	if all.SchemaVersion != 1 {
-		t.Errorf("schema_version = %d, want 1", all.SchemaVersion)
+	all := NewSummaryJSON(Summarize(a, RangeAll, now, true), now)
+	if all.SchemaVersion != 2 {
+		t.Errorf("schema_version = %d, want 2", all.SchemaVersion)
+	}
+	if !all.IncludeCache {
+		t.Error("include_cache must be true when Summarize asked for cache")
 	}
 	if !all.TokenSplitExact {
 		t.Error("all-time split must be marked exact")
@@ -38,8 +41,20 @@ func TestNewSummaryJSON(t *testing.T) {
 		t.Error("tokens_estimated must carry through from the aggregate")
 	}
 
+	fresh := NewSummaryJSON(Summarize(a, RangeAll, now, false), now)
+	if fresh.IncludeCache {
+		t.Error("include_cache must be false by default")
+	}
+	wantFresh := a.CountedTokens(false)
+	if fresh.Tokens.Total != wantFresh {
+		t.Errorf("fresh tokens.total = %d, want %d", fresh.Tokens.Total, wantFresh)
+	}
+	if fresh.Tokens.CacheRead != 4_000_000 {
+		t.Errorf("fresh cache_read = %d, want ledger 4,000,000", fresh.Tokens.CacheRead)
+	}
+
 	// windowed range must flag the split as inexact
-	wk := NewSummaryJSON(Summarize(a, Range7d, now), now)
+	wk := NewSummaryJSON(Summarize(a, Range7d, now, false), now)
 	if wk.TokenSplitExact {
 		t.Error("windowed split must NOT be marked exact")
 	}
@@ -49,7 +64,7 @@ func TestNewSummaryJSON(t *testing.T) {
 	if err != nil {
 		t.Fatalf("marshal: %v", err)
 	}
-	for _, key := range []string{"schema_version", "token_split_exact", "tokens_estimated", "cache_read", "est_usd", "fav_model"} {
+	for _, key := range []string{"schema_version", "token_split_exact", "tokens_estimated", "cache_read", "est_usd", "fav_model", "include_cache"} {
 		if !strings.Contains(string(b), key) {
 			t.Errorf("json missing key %q", key)
 		}
@@ -58,7 +73,7 @@ func TestNewSummaryJSON(t *testing.T) {
 		t.Error("cursor_status should be omitted for non-cursor harnesses")
 	}
 
-	cur := NewSummaryJSON(Summarize(newAggregate(Cursor), RangeAll, now), now)
+	cur := NewSummaryJSON(Summarize(newAggregate(Cursor), RangeAll, now, false), now)
 	if cur.CursorStatus == nil {
 		t.Fatal("cursor_status missing for cursor harness")
 	}

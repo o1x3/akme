@@ -50,6 +50,11 @@ type Summary struct {
 	// from text length (see Aggregate.TokensEstimated).
 	TokensEstimated bool
 
+	// IncludeCache is true when TotalTokens (and day/model token series) keep
+	// prompt-cache reads. Default summaries exclude them; pass true via the
+	// CLI `all` keyword to include.
+	IncludeCache bool
+
 	// CacheTokens above is the merged read+write sum; these keep them apart
 	// because cache-read and cache-creation are priced very differently.
 	CacheReadTokens  int64
@@ -77,7 +82,9 @@ type Heatmap struct {
 }
 
 // Summarize derives a Summary for the given range relative to now.
-func Summarize(a *Aggregate, rng string, now time.Time) Summary {
+// includeCache controls whether prompt-cache reads join TotalTokens and the
+// day/model token series (false = default fresh counts; true = full ledger).
+func Summarize(a *Aggregate, rng string, now time.Time, includeCache bool) Summary {
 	days := RangeDays(rng)
 
 	// scalar stats are computed over the selected window
@@ -86,6 +93,7 @@ func Summarize(a *Aggregate, rng string, now time.Time) Summary {
 		Range:           rng,
 		Sessions:        a.Sessions,
 		TokensEstimated: a.TokensEstimated,
+		IncludeCache:    includeCache,
 	}
 
 	// window bounds (inclusive). zero cutoff => everything up to today.
@@ -111,11 +119,13 @@ func Summarize(a *Aggregate, rng string, now time.Time) Summary {
 			}
 		}
 	}
+	var windowTok int64
 	for day, tok := range a.ByDayTokens {
 		if inWindow(day) {
-			s.TotalTokens += tok
+			windowTok += tok
 		}
 	}
+	s.TotalTokens = windowTok
 
 	// Peak hour, favourite model and the model breakdown are all windowed via
 	// the per-day structures, so they match the selected range.
@@ -125,21 +135,25 @@ func Summarize(a *Aggregate, rng string, now time.Time) Summary {
 
 	// For all-time we report the true ledger totals (exact cache split); for
 	// windowed ranges we only have per-day token sums, so we approximate the
-	// input/output/cache breakdown proportionally.
+	// input/output/cache breakdown proportionally. Headline TotalTokens then
+	// follows the counting mode (cache reads optional).
 	if days == 0 {
 		s.InputTokens = a.InputTokens
 		s.OutputTokens = a.OutputTokens
 		s.CacheReadTokens = a.CacheReadTokens
 		s.CacheWriteTokens = a.CacheWriteTokens
 		s.CacheTokens = a.CacheReadTokens + a.CacheWriteTokens
-		s.TotalTokens = a.TotalTokens() // authoritative ledger total for all-time
+		s.TotalTokens = a.CountedTokens(includeCache)
 	} else if total := a.TotalTokens(); total > 0 {
-		f := float64(s.TotalTokens) / float64(total)
+		f := float64(windowTok) / float64(total)
 		s.InputTokens = int64(float64(a.InputTokens) * f)
 		s.OutputTokens = int64(float64(a.OutputTokens) * f)
 		s.CacheReadTokens = int64(float64(a.CacheReadTokens) * f)
 		s.CacheWriteTokens = int64(float64(a.CacheWriteTokens) * f)
 		s.CacheTokens = s.CacheReadTokens + s.CacheWriteTokens
+		// Scale the day-sum rather than summing truncated class shares so a
+		// zero-cache ledger stays exact (1000×700/1500 + 500×700/1500 → 699).
+		s.TotalTokens = scaleTokens(windowTok, a.dayTokenScale(includeCache))
 	}
 
 	s.CurrentStreak, s.LongestStreak = a.Streaks(now)
@@ -159,8 +173,45 @@ func Summarize(a *Aggregate, rng string, now time.Time) Summary {
 		s.DailyDays = 60 // all-time: show the most recent 60 days of momentum
 	}
 	s.Daily = a.DailySeries(now, s.DailyDays)
+
+	// Cost always prices the real ledger split (including cache reads), using
+	// unscaled model volumes from the parse-time series.
 	s.Cost = EstimateCost(s.Models, s.InputTokens, s.OutputTokens, s.CacheReadTokens, s.CacheWriteTokens)
+
+	// Day/model series are stored with cache baked in at parse time; scale them
+	// when excluding cache reads so heatmaps/trends match headline totals.
+	if scale := a.dayTokenScale(includeCache); scale != 1 {
+		scaleHeatmap(&s.Heatmap, scale)
+		for i := range s.WeekdayTok {
+			s.WeekdayTok[i] = scaleTokens(s.WeekdayTok[i], scale)
+		}
+		for i := range s.TopDays {
+			s.TopDays[i].Tokens = scaleTokens(s.TopDays[i].Tokens, scale)
+		}
+		for i := range s.Daily {
+			s.Daily[i] = scaleTokens(s.Daily[i], scale)
+		}
+		for i := range s.Models {
+			s.Models[i].Tokens = scaleTokens(s.Models[i].Tokens, scale)
+		}
+	}
 	return s
+}
+
+func scaleHeatmap(h *Heatmap, scale float64) {
+	h.Max = 0
+	for r := range h.Cells {
+		for c, v := range h.Cells[r] {
+			if v < 0 {
+				continue // out-of-range sentinel
+			}
+			nv := scaleTokens(v, scale)
+			h.Cells[r][c] = nv
+			if nv > h.Max {
+				h.Max = nv
+			}
+		}
+	}
 }
 
 // buildHeatmap lays out the contribution grid. The newest week is the last

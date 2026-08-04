@@ -19,19 +19,21 @@ import (
 )
 
 type tokenOptions struct {
-	harness     string
-	rng         string
-	tab         string
-	interactive bool
-	jsonOut     bool
-	quiet       bool
-	compare     bool
-	help        bool
+	harness      string
+	rng          string
+	tab          string
+	interactive  bool
+	jsonOut      bool
+	quiet        bool
+	compare      bool
+	help         bool
+	includeCache bool // `all` — include prompt-cache reads in totals
 }
 
 // parseTokenArgs ports tmax's positional, order-independent argument grammar.
-// Bare "all" is a harness keyword; the all-time range keywords are "alltime"
-// and "lifetime" (all-time is also the default).
+// Bare "all" includes prompt-cache reads in headline totals (default excludes
+// them). Combined-harness keywords are "combined" and "everything"; all-time
+// range keywords are "alltime" and "lifetime" (all-time is also the default).
 func parseTokenArgs(args []string) (tokenOptions, error) {
 	o := tokenOptions{harness: core.Combined, rng: core.RangeAll, tab: ui.TabOverview}
 	for _, a := range args {
@@ -42,6 +44,12 @@ func parseTokenArgs(args []string) (tokenOptions, error) {
 		case "-i", "--interactive", "-t", "--tui", "tui":
 			o.interactive = true
 
+		// ---- counting mode ----
+		case "all":
+			// Include prompt-cache reads in totals. (Harness merge stays the
+			// default; use combined/everything to name it explicitly.)
+			o.includeCache = true
+
 		// ---- harnesses ----
 		case "claude", "cc", "claude-code":
 			o.harness = core.Claude
@@ -51,7 +59,7 @@ func parseTokenArgs(args []string) (tokenOptions, error) {
 			o.harness = core.Pi
 		case "cursor", "cursor-ide", "cursor-cli", "cursor-agent":
 			o.harness = core.Cursor
-		case "all", "combined", "everything":
+		case "combined", "everything":
 			o.harness = core.Combined
 
 		// ---- ranges ----
@@ -169,11 +177,12 @@ func (a App) runToken(ctx context.Context, args []string, stdout io.Writer) erro
 			Dark:           dark,
 			DarkLocked:     darkLocked,
 			ForceTruecolor: forced,
+			IncludeCache:   o.includeCache,
 		})
 	}
 
 	agg := core.Load(o.harness)
-	s := core.Summarize(agg, o.rng, now)
+	s := core.Summarize(agg, o.rng, now, o.includeCache)
 	fmt.Fprintln(out, ui.RenderCard(s, o.tab))
 	maybeCursorHint(o.harness, s)
 
@@ -186,22 +195,28 @@ func (a App) runToken(ctx context.Context, args []string, stdout io.Writer) erro
 }
 
 // tokenTag renders the "[harness·range]" provenance tag for quiet mode,
-// dropping it only for the bare default (all harnesses, all time).
+// dropping it only for the bare default (all harnesses, all time, cache
+// reads excluded). Combined harness is labeled "combined"; `all` means
+// include-cache and is appended as a third component when set.
 func tokenTag(o tokenOptions) string {
-	if o.harness == core.Combined && o.rng == core.RangeAll {
+	if o.harness == core.Combined && o.rng == core.RangeAll && !o.includeCache {
 		return ""
 	}
 	h := o.harness
 	if h == core.Combined {
-		h = "all"
+		h = "combined"
 	}
-	return "[" + h + "·" + o.rng + "]"
+	tag := h + "·" + o.rng
+	if o.includeCache {
+		tag += "·all"
+	}
+	return "[" + tag + "]"
 }
 
 // runTokenQuiet prints exactly one terse, prompt-safe line of headline numbers.
 // No colour, no hint, single newline. Exit 3 when the selection has no usage.
 func runTokenQuiet(o tokenOptions, now time.Time, stdout io.Writer) error {
-	s := core.Summarize(core.Load(o.harness), o.rng, now)
+	s := core.Summarize(core.Load(o.harness), o.rng, now, o.includeCache)
 	if !s.HasData() {
 		fmt.Fprintln(stdout, "akme token: no usage for this selection")
 		maybeCursorHint(o.harness, s)
@@ -215,14 +230,14 @@ func runTokenQuiet(o tokenOptions, now time.Time, stdout io.Writer) error {
 
 // runTokenJSON emits the machine-readable summary: one indented object for a
 // single harness, or NDJSON (one compact object per concrete harness) for
-// "all", so `akme token all json | jq -s` works.
+// combined, so `akme token json | jq -s` / `akme token all json | jq -s` work.
 func runTokenJSON(o tokenOptions, now time.Time, stdout io.Writer) error {
 	enc := json.NewEncoder(stdout)
 	if o.harness == core.Combined {
 		any := false
 		var cursorSum core.Summary
 		for _, h := range core.Harnesses {
-			s := core.Summarize(core.Load(h), o.rng, now)
+			s := core.Summarize(core.Load(h), o.rng, now, o.includeCache)
 			_ = enc.Encode(core.NewSummaryJSON(s, now))
 			any = any || s.HasData()
 			if h == core.Cursor {
@@ -235,7 +250,7 @@ func runTokenJSON(o tokenOptions, now time.Time, stdout io.Writer) error {
 		}
 		return nil
 	}
-	s := core.Summarize(core.Load(o.harness), o.rng, now)
+	s := core.Summarize(core.Load(o.harness), o.rng, now, o.includeCache)
 	enc.SetIndent("", "  ")
 	_ = enc.Encode(core.NewSummaryJSON(s, now))
 	if !s.HasData() {
@@ -263,7 +278,7 @@ func maybeCursorHint(harness string, s core.Summary) {
 func runTokenCompare(o tokenOptions, now time.Time, stdout io.Writer) error {
 	var sums []core.Summary
 	for _, h := range core.Harnesses {
-		if s := core.Summarize(core.Load(h), o.rng, now); s.HasData() {
+		if s := core.Summarize(core.Load(h), o.rng, now, o.includeCache); s.HasData() {
 			sums = append(sums, s)
 		}
 	}
@@ -278,16 +293,16 @@ func tokenHelpText() string {
 	return `akme token — token stats across your AI coding harnesses
 
 USAGE
-  akme token [harness] [range] [tab] [-i]
-  akme token [harness] [range] (json | quiet | compare)
+  akme token [harness] [range] [tab] [all] [-i]
+  akme token [harness] [range] [all] (json | quiet | compare)
   akme help token [topic]
 
-HARNESS   (default: all)
+HARNESS   (default: combined — every harness merged)
   claude            Claude Code        ~/.claude + ~/.config/claude
   codex             OpenAI Codex       ~/.codex (sessions + archived)
   pi                pi.dev             ~/.pi/agent/sessions
   cursor            Cursor IDE + CLI   state.vscdb + ~/.cursor
-  all               every harness merged
+  combined          every harness merged
 
   Overrides: CLAUDE_CONFIG_DIR, CODEX_HOME, PI_AGENT_DIR.
   Claude uses final streaming chunks; Cursor prefers the dashboard usage
@@ -296,6 +311,12 @@ HARNESS   (default: all)
   Cursor activity is machine-local; billed tokens follow the logged-in account
   (incl. team memberships). Empty dashboard replies keep local estimates.
   Paths: macOS ~/Library/Application Support, Linux ~/.config, Windows %APPDATA%.
+
+COUNTING  (default: exclude prompt-cache reads)
+  all               include cache reads in totals / series / quiet / json
+
+  Cache writes stay in the default total (billed creation). Mix and cost still
+  show the full ledger split either way.
 
 RANGE     (default: alltime)
   alltime           lifetime
@@ -314,7 +335,7 @@ TAB       (default: overview)
   mix               input / output / cache token composition (split)
 
 OUTPUT MODES   (bypass the card)
-  json              machine-readable summary (--stats); NDJSON for "all"
+  json              machine-readable summary (--stats); NDJSON for combined
   quiet             one terse line for a shell prompt (-q)
   compare           all harnesses side by side (vs)
 
@@ -338,5 +359,5 @@ EXAMPLES
   akme token all json      akme token 30d compare        akme token pi trend -i
 
 Nest help for one topic:
-  akme help token harness · range · view · output · flags · env · exit · examples`
+  akme help token harness · range · count · view · output · flags · env · exit · examples`
 }

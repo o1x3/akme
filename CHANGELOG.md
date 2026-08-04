@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.0
+
+- `akme token` headline totals exclude prompt-cache reads by default (cache writes stay). Pass `all` to include cache reads in totals, day series, quiet, compare, and JSON `tokens.total`.
+- Harness merge keyword is now `combined` / `everything` (`all` is the counting mode). Default harness is unchanged (every harness merged).
+- Nested help: `akme help token count`. JSON schema_version 2 adds `include_cache`.
+
 ## 0.7.1
 
 - Tightened `akme git` overview vertical spacing (banner sits on the body; legend sits on the heatmap).

@@ -74,7 +74,7 @@ func TestTUIViewUniformCardLines(t *testing.T) {
 	m := fixedModel()
 	m.w, m.h = 0, 0 // skip Place so we inspect the padded body widths
 	// Re-render the card path without Place by calling padBlock on a card.
-	s := core.Summarize(m.aggs[harnesses[0]], ranges[0], m.now)
+	s := core.Summarize(m.aggs[harnesses[0]], ranges[0], m.now, false)
 	card := padBlock(ui.RenderCard(s, ui.TabOverview))
 	lines := strings.Split(card, "\n")
 	w0 := lipgloss.Width(lines[0])

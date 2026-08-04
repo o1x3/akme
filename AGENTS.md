@@ -47,7 +47,7 @@ akme help <domain>        # domain overview + subcommands/topics
 akme help <domain> <verb> # verb / topic detail
 ```
 
-Examples that must keep working: `akme help git`, `akme help git activity`, `akme help git stat`, `akme help token`, `akme help token harness`.
+Examples that must keep working: `akme help git`, `akme help git activity`, `akme help git stat`, `akme help token`, `akme help token harness`, `akme help token count`.
 
 Precedent (keep this current when commands change):
 

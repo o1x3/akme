@@ -314,6 +314,7 @@ func tokenHelpTopicsText() string {
 Topics:
   harness   Claude / Codex / pi / Cursor sources
   range     alltime / 30d / 7d
+  count     exclude cache reads (default) / all
   view      overview, models, hours, punchcard, ...
   output    json / quiet / compare modes
   flags     -i / --help
@@ -335,19 +336,19 @@ func tokenTopicHelpText(topic string) string {
 	case "harness", "harnesses", "source", "sources":
 		return `akme token — harnesses
 
-HARNESS   (default: all)
+HARNESS   (default: combined — every harness merged)
   claude            Claude Code        ~/.claude + ~/.config/claude
   codex             OpenAI Codex       ~/.codex (sessions + archived)
   pi                pi.dev             ~/.pi/agent/sessions
   cursor            Cursor IDE + CLI   state.vscdb + ~/.cursor
-  all               every harness merged
+  combined          every harness merged
 
 Aliases:
   claude: cc, claude-code
   codex:  cx
   pi:     pi.dev, pidev
   cursor: cursor-ide, cursor-cli, cursor-agent
-  all:    combined, everything
+  combined: everything
 
 Overrides: CLAUDE_CONFIG_DIR, CODEX_HOME, PI_AGENT_DIR (comma-separated paths).
 
@@ -386,6 +387,28 @@ Aliases:
 More: akme help token
 
 `
+	case "count", "counting", "cache":
+		return `akme token — counting
+
+COUNTING  (default: exclude prompt-cache reads)
+  all               include cache reads in totals / day series / quiet / json
+
+Headline totals, heatmaps, trends, model shares, quiet, compare, and
+tokens.total in JSON omit cache_read unless you pass all. Cache writes
+stay in the default total (billed creation). The mix and cost views still
+expose the full ledger split; JSON always reports cache_read / cache_write
+and sets include_cache.
+
+Not related to AKME_TOKEN_NO_CACHE (that bypasses the on-disk parse cache).
+
+Examples:
+  akme token              # fresh totals (no cache reads)
+  akme token all          # full ledger including cache reads
+  akme token claude all quiet
+
+More: akme help token
+
+`
 	case "view", "views", "tab", "tabs":
 		return `akme token — views
 
@@ -407,7 +430,7 @@ More: akme help token
 		return `akme token — output modes
 
 OUTPUT MODES   (bypass the card)
-  json              machine-readable summary (--stats); NDJSON for "all"
+  json              machine-readable summary (--stats); NDJSON for combined
   quiet             one terse line for a shell prompt (-q)
   compare           all harnesses side by side (vs)
 
@@ -424,6 +447,9 @@ FLAGS
   -h, --help        this help
 
 Interactive aliases: --interactive, -t, tui
+
+Counting keyword (not a flag): all — include prompt-cache reads.
+See: akme help token count
 
 More: akme help token
 

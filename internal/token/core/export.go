@@ -19,6 +19,9 @@ type SummaryJSON struct {
 		CacheRead  int64 `json:"cache_read"`
 		CacheWrite int64 `json:"cache_write"`
 	} `json:"tokens"`
+	// IncludeCache mirrors the counting mode: when false (default), tokens.total
+	// excludes cache_read. The cache_read field is always the ledger value.
+	IncludeCache bool `json:"include_cache"`
 	// TokenSplitExact is true only for the all-time range, where the input/
 	// output/cache figures are the authoritative ledger totals. For windowed
 	// ranges the split is apportioned proportionally — an estimate, not a count.
@@ -59,10 +62,11 @@ type ModelJSON struct {
 // NewSummaryJSON projects a Summary onto the stable JSON DTO.
 func NewSummaryJSON(s Summary, now time.Time) SummaryJSON {
 	j := SummaryJSON{
-		SchemaVersion:   1,
+		SchemaVersion:   2,
 		GeneratedAt:     now,
 		Harness:         s.Harness,
 		Range:           s.Range,
+		IncludeCache:    s.IncludeCache,
 		TokenSplitExact: s.Range == RangeAll,
 		TokensEstimated: s.TokensEstimated,
 		Sessions:        s.Sessions,

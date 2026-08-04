@@ -84,7 +84,12 @@ func TestNestedHelp(t *testing.T) {
 		{
 			name: "token harness topic",
 			args: []string{"help", "token", "harness"},
-			want: []string{"Claude Code", "~/.claude", "cursor-agent"},
+			want: []string{"Claude Code", "~/.claude", "cursor-agent", "combined"},
+		},
+		{
+			name: "token count topic",
+			args: []string{"help", "token", "count"},
+			want: []string{"exclude prompt-cache reads", "include cache reads", "AKME_TOKEN_NO_CACHE"},
 		},
 		{
 			name: "token view topic",
@@ -94,7 +99,7 @@ func TestNestedHelp(t *testing.T) {
 		{
 			name: "token topics index",
 			args: []string{"help", "token", "topics"},
-			want: []string{"akme help token [topic]", "harness", "examples"},
+			want: []string{"akme help token [topic]", "harness", "count", "examples"},
 		},
 		{
 			name: "version help",
